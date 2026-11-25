@@ -126,6 +126,27 @@ def nivel(n):
     return next(nome for nome, minimo in NIVEIS if n >= minimo)
 
 
+EMPATE = 2.0  # notas a menos de 2 pontos contam como empate (docs/PLANO_RADAR.md, Frente 1, item 3)
+
+
+def variedade(itens, chave="loja"):
+    """Reordena uma lista já ordenada pela nota: no empate, vem antes a oferta de outra loja que não a da anterior.
+    Nunca passa uma oferta à frente de outra com nota maior que a dela mais EMPATE (decisão do dono, 25/11/2026:
+    nada de limite por loja; a variedade só desempata)."""
+    fila, saida = list(itens), []
+    while fila:
+        escolha = 0
+        if saida and fila[0].get(chave) == saida[-1].get(chave):
+            for i in range(1, len(fila)):
+                if fila[0].get("nota", 0) - fila[i].get("nota", 0) > EMPATE:
+                    break
+                if fila[i].get(chave) != saida[-1].get(chave):
+                    escolha = i
+                    break
+        saida.append(fila.pop(escolha))
+    return saida
+
+
 def carregar_pesos():
     """Pesos calibrados (conteudo/black/nota_pesos.json), se existirem; senão, os de partida."""
     try:

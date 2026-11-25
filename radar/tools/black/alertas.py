@@ -125,6 +125,7 @@ def _publicar(titulo, texto, link=PAGINA, tags="game_die", prioridade="default",
 
 
 FRESCO_HORAS = 24  # alerta individual só com preço lido há no máximo 24 horas
+IMPERDIVEIS_POR_DIA = 3  # docs/PLANO_RADAR.md, Frente 3: alerta na hora só para Imperdível, no máximo 3 por dia
 
 
 def fresco(x, agora=None):
@@ -168,9 +169,12 @@ def avisar(radar_itens):
         pendentes.pop(x["slug"], None)
     novos.sort(key=lambda x: (-x.get("nota", 0), -x["desc"]))
     enviados = 0
-    # alerta individual só para oferta "Imperdível" ou "Muito boa" com preço lido nas últimas 24 horas (plano de
-    # 25/11/2026: nota de qualidade e frescor); as outras acima do piso vão no alerta-resumo, pelo nome
-    individuais = [x for x in novos if x.get("nivel", "Muito boa") != "Boa" and fresco(x)][:MAX_POR_LEITURA]
+    # alerta individual só para oferta "Imperdível" com preço lido nas últimas 24 horas, no máximo
+    # IMPERDIVEIS_POR_DIA por dia (docs/PLANO_RADAR.md, Frente 3); as outras acima do piso vão no alerta-resumo
+    dia_cota = est.get("individuais_dia", {})
+    ja_hoje = dia_cota.get(hoje, 0)
+    vagas = max(0, IMPERDIVEIS_POR_DIA - ja_hoje)
+    individuais = [x for x in novos if x.get("nivel", "Imperdível") == "Imperdível" and fresco(x)][:min(vagas, MAX_POR_LEITURA)]
     for x in individuais:
         nome = x["nome"].replace("–", "-").replace("—", "-")
         texto = (f"{brl(x['por'])} na {x['loja']}, {x['desc'] * 100:.0f}% abaixo da média real de {brl(x['ref'])}."
@@ -195,7 +199,8 @@ def avisar(radar_itens):
         for x in resto:
             avisados[x["slug"]] = hoje
             pendentes.pop(x["slug"], None)
-    ESTADO.write_text(json.dumps({"no_radar": sorted(melhor), "avisados": avisados, "pendentes": pendentes}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
+    ESTADO.write_text(json.dumps({"no_radar": sorted(melhor), "avisados": avisados, "pendentes": pendentes,
+                                  "individuais_dia": {hoje: ja_hoje + enviados}}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
                       encoding="utf-8")
     print(f"ok alertas: {len(novos)} jogos novos no radar acima do piso ({len(pequenas)} abaixo, só na página), {enviados} alertas enviados" + (f" e 1 resumo com {len(resto)}" if resto else ""))
 

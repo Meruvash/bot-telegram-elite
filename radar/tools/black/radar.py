@@ -715,7 +715,8 @@ def calcular():
         if x["slug"] not in no_radar and (x["slug"], x["loja"]) not in vo:
             vo.add((x["slug"], x["loja"]))
             outras_u.append(x)
-    return unicos, armadilhas[:30], quase_u, outras_u
+    # variedade só no desempate (nota.variedade): nunca passa à frente de uma nota bem maior
+    return nota.variedade(unicos), armadilhas[:30], nota.variedade(quase_u), nota.variedade(outras_u)
 
 
 def perto_do_corte(maximo=350):
