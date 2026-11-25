@@ -689,8 +689,12 @@ def calcular():
             radar.append(base)
         elif base["desc"] >= QUASE:
             quase.append(base)
+    # nota de qualidade (nota.py, plano de 25/11/2026): decide a ordem; quem entra continua sendo o corte de 20%
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import nota  # noqa: E402 (mesmo diretório)
+    nota.anotar(radar + quase + outras, hoje_d, premiados())
     # uma linha por jogo e loja; no radar, a melhor oferta de cada jogo vem primeiro
-    radar.sort(key=lambda x: -x["desc"])
+    radar.sort(key=lambda x: (-x["nota"], -x["desc"]))
     vistos, unicos = set(), []
     for x in radar:
         if (x["slug"], x["loja"]) not in vistos:
@@ -699,13 +703,13 @@ def calcular():
     armadilhas.sort(key=lambda x: -((x["de"] - x["por"]) / x["de"]))
     # Quase Black: um por jogo (a melhor loja) e só jogos que não estão no radar principal
     no_radar = {x["slug"] for x in unicos}
-    quase.sort(key=lambda x: -x["desc"])
+    quase.sort(key=lambda x: (-x["nota"], -x["desc"]))
     vq, quase_u = set(), []
     for x in quase:
         if x["slug"] not in no_radar and (x["slug"], x["loja"]) not in vq:
             vq.add((x["slug"], x["loja"]))
             quase_u.append(x)
-    outras.sort(key=lambda x: -x["desc"])
+    outras.sort(key=lambda x: (-x["nota"], -x["desc"]))
     vo, outras_u = set(), []
     for x in outras:
         if x["slug"] not in no_radar and (x["slug"], x["loja"]) not in vo:
