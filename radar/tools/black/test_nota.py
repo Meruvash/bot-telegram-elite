@@ -44,5 +44,22 @@ class TestNota(unittest.TestCase):
         self.assertEqual(nota.nivel(10), "Boa")
 
 
+class TestCalibragem(unittest.TestCase):
+    def test_auc(self):
+        import calibrar
+        self.assertEqual(calibrar.auc([0.1, 0.2, 0.8, 0.9], [0, 0, 1, 1]), 1.0)
+        self.assertEqual(calibrar.auc([0.5, 0.5], [0, 1]), 0.5)
+
+    def test_logistica_acha_o_sinal_que_importa(self):
+        import calibrar
+        import random
+        r = random.Random(1)
+        X = [[r.random(), r.random(), r.random(), r.random()] for _ in range(400)]
+        y = [1 if x[3] > 0.7 else 0 for x in X]  # só a relevância decide
+        w = calibrar.para_pesos(calibrar.logistica(X, y, passos=800))
+        self.assertEqual(max(w, key=w.get), "relevancia")
+        self.assertTrue(all(calibrar.PESO_MIN - 1e-9 <= v <= calibrar.PESO_MAX + 1e-9 for v in w.values()))
+
+
 if __name__ == "__main__":
     unittest.main()

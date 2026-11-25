@@ -12,6 +12,7 @@ possa fazer o GitHub desativar o repositório**.
 | `telegram` | publica promoções, notícias e resenhas no canal do Telegram | 15 min | (novo) |
 | `notificacoes` | plano B das notificações do sininho do site | 15 min | notificacoes.yml |
 | `auditoria` | confere se os links de oferta do /black/ levam ao produto certo | 6 h | auditoria-links.yml |
+| `calibragem` | guarda os posts dos canais de curadoria e, a cada 7 dias, retreina os pesos da nota das ofertas (`tools/black/calibrar.py`); só troca os pesos com 150+ positivos e acerto maior que o atual | 1 dia | (novo) |
 
 A checagem de duplicatas (black-sem-duplicata.yml) e a de link de afiliado de terceiros rodam dentro de cada ciclo,
 antes de publicar. Ficaram de fora: `radar-reserva.yml` (reserva no GitHub Actions, que existia por causa dos atrasos
