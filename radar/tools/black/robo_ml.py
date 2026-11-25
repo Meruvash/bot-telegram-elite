@@ -29,7 +29,7 @@ def main():
     if mexidos:
         radar.mesclar(radar.HOJE, mexidos)
     print(f"ok robô Mercado Livre: {len(mexidos)} jogos com preço do Mercado Livre atualizado")
-    # vigia de PS5 abaixo de R$ 3.000 (pedido do usuário em 20/11/2026): erro aqui não derruba o robô
+    # vigia de PS5 abaixo de ps5.LIMITE (pedido do usuário em 20/11/2026; R$ 3.700 desde 25/11): erro aqui não derruba o robô
     try:
         import ps5
         ps5.avisar(ps5.ler())

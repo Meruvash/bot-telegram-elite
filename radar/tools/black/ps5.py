@@ -1,5 +1,6 @@
 """Vigia de PlayStation 5 do Black de Verdade (pedido do usuário em 20/11/2026: "se tiver qualquer PlayStation 5
-abaixo de R$ 3.000, me informa e adiciona essa promoção no site").
+abaixo de R$ 3.000, me informa e adiciona essa promoção no site"; limite subiu para R$ 3.700 em 25/11/2026,
+a pedido do dono: o PS5 Digital passou a R$ 4.599,99 e nada aparecia abaixo de R$ 3.000).
 
 Fora do tema do site (jogos de tabuleiro), por isso fica numa seção própria da página do Black e num arquivo próprio
 (conteudo/black/ps5.json). Duas fontes, com as mesmas regras do radar:
@@ -25,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import radar  # noqa: E402
 
 ARQ = radar.DADOS / "ps5.json"
-LIMITE = 3000.0
+LIMITE = 3700.0  # pedido do dono em 25/11/2026 (era 3000.0)
 BUSCAS = ("console playstation 5", "playstation 5 slim", "playstation 5 pro", "ps5 console")
 PRECO_MIN = 1500.0  # nenhum PS5 novo custa menos que isso: abaixo, é jogo ou acessório (20/11/2026: "Catan Console
                     # Edition PS5" a R$ 199,97 entrou como console na primeira leitura)
@@ -123,13 +124,18 @@ def vitrine():
     return sorted(saida, key=lambda a: a["preco"]), dados
 
 
+def limite_txt():
+    """"R$ 3.700", para os textos da página e dos alertas."""
+    return "R$ " + f"{LIMITE:,.0f}".replace(",", ".")
+
+
 def avisar(novos):
     if not novos:
         return
     import alertas
     for a in novos[:3]:
         alertas.enviar(f"PS5 por R$ {a['preco']:.2f}".replace(".", ","),
-                       f"{a['modelo']} na {a['loja']} ({a.get('vendedor') or 'loja'}), abaixo de R$ 3.000",
+                       f"{a['modelo']} na {a['loja']} ({a.get('vendedor') or 'loja'}), abaixo de {limite_txt()}",
                        link=a["url"], tags="video_game,moneybag")
 
 
