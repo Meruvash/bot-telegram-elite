@@ -111,7 +111,7 @@ Sem medir, não dá para saber o que funciona. Tudo sem cookie de terceiros e se
 | Quando | O quê | Por quê |
 |---|---|---|
 | **Agora (1 a 2 dias)** ✅ vigia e piso feitos em 25/11 | vigia dos robôs; piso de R$ 30 / R$ 50 no destaque; chave do Keepa e do ntfy | rápido, e já melhora a página na semana da Black |
-| **Semana 1** | nota da oferta (com variedade no desempate e bloco da loja em promoção forte); três níveis de alerta; resumo das 12h e das 19h; confirmar antes de avisar | muda a qualidade do que chega às pessoas |
+| **Semana 1** ✅ nota, variedade no desempate, níveis, máximo de 3 Imperdíveis por dia e calibragem automática feitos em 25/11 (ver abaixo) | nota da oferta (com variedade no desempate e bloco da loja em promoção forte); três níveis de alerta; resumo das 12h e das 19h; confirmar antes de avisar | muda a qualidade do que chega às pessoas |
 | **Semana 2** | prioridade de leitura em três faixas; mais feeds de loja; contador de cliques | eficiência e medição |
 | **Semana 3 e 4** | lista de desejos (site e Telegram); "novas desde a última visita"; gráfico de preço | o que cria o hábito de voltar |
 | **Dezembro** | contato com as lojas; "Radar de Ofertas" permanente; filtros | consolidar depois da Black |
@@ -122,3 +122,17 @@ Sem medir, não dá para saber o que funciona. Tudo sem cookie de terceiros e se
 - Decidir o piso do destaque (sugestão: economia de R$ 30 e preço de R$ 50).
 - Decidir os horários do resumo (sugestão: 12h e 19h de Brasília).
 - Autorizar o contato com as lojas em nome do site.
+
+## Feito em 25/11/2026 (branch nota-de-qualidade)
+
+- **Nota da oferta** (`tools/black/nota.py`): desconto real, menor preço do período, economia em R$ e procura pelo
+  jogo (BGG, prêmio ou resenha, número de lojas; expansão vale menos), vezes a confiança no preço (fonte e idade da
+  leitura). Ordena o radar, o Quase Black e Outras promoções; os destaques saem pela nota dentro do piso de R$ 30 / R$ 50.
+- **Níveis** na escala da nota como ela saiu nos dados reais: Imperdível 65+ (cerca de 15% dos jogos), Muito boa 52+,
+  Boa abaixo disso. Os números 85 e 70 da Frente 3 eram de antes de existir a nota; os limites ficam em `nota.NIVEIS`.
+- **Alertas:** na hora só Imperdível, com preço lido há até 24 h, no máximo 3 por dia; o resto acima do piso vai no resumo.
+- **Variedade no desempate:** notas a menos de 2 pontos contam como empate e vem antes outra loja (`nota.variedade`).
+- **Calibragem automática** (`tools/black/calibrar.py`, robô `calibragem`): os pesos da nota aprendem com os posts dos
+  canais de curadoria e, quando existir, com os cliques (`conteudo/black/cliques.json`). Só trocam com 150+ positivos e
+  acerto melhor que o atual. Na primeira medição (77 positivos) não trocou.
+- Falta: bloco da loja em promoção forte, preço com cupom na nota, confirmar a página antes de avisar, contador de cliques.

@@ -31,6 +31,7 @@ AGENDA = {
     "telegram": ([3, 18, 33, 48], None),
     "notificacoes": ([7, 22, 37, 52], None),
     "auditoria": ([41], list(range(0, 24, 6))),
+    "calibragem": ([10], [5]),  # guarda os posts de curadoria todo dia; retreina os pesos da nota a cada 7 dias
 }
 # robôs desligados por variável (ex.: DESLIGAR=educado,auditoria) sem mexer no código
 DESLIGADOS = {r.strip() for r in os.environ.get("DESLIGAR", "").split(",") if r.strip()}

@@ -124,13 +124,28 @@ def _publicar(titulo, texto, link=PAGINA, tags="game_die", prioridade="default",
         return False
 
 
+FRESCO_HORAS = 24  # alerta individual só com preço lido há no máximo 24 horas
+IMPERDIVEIS_POR_DIA = 3  # docs/PLANO_RADAR.md, Frente 3: alerta na hora só para Imperdível, no máximo 3 por dia
+
+
+def fresco(x, agora=None):
+    """O preço da oferta foi lido há no máximo FRESCO_HORAS? Sem hora conhecida, conta como fresco (como antes)."""
+    try:
+        t = dt.datetime.fromisoformat(str(x.get("verificado") or "").replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=dt.timezone.utc)
+    return (agora or dt.datetime.now(dt.timezone.utc)) - t <= dt.timedelta(hours=FRESCO_HORAS)
+
+
 def avisar(radar_itens):
     """Alerta os jogos que entraram no radar desde a última leitura."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import radar  # noqa: E402  (aqui dentro: o radar também importa este módulo)
     melhor = {}
     for x in radar_itens:
-        if x["slug"] not in melhor or x["desc"] > melhor[x["slug"]]["desc"]:
+        if x["slug"] not in melhor or (x.get("nota", 0), x["desc"]) > (melhor[x["slug"]].get("nota", 0), melhor[x["slug"]]["desc"]):
             melhor[x["slug"]] = x
     try:
         est = json.loads(ESTADO.read_text(encoding="utf-8"))
@@ -152,22 +167,30 @@ def avisar(radar_itens):
     novos = [x for x in novos if radar.vale_destaque(x)]
     for x in pequenas:
         pendentes.pop(x["slug"], None)
-    novos.sort(key=lambda x: -x["desc"])
+    novos.sort(key=lambda x: (-x.get("nota", 0), -x["desc"]))
     enviados = 0
-    for x in novos[:MAX_POR_LEITURA]:
+    # alerta individual só para oferta "Imperdível" com preço lido nas últimas 24 horas, no máximo
+    # IMPERDIVEIS_POR_DIA por dia (docs/PLANO_RADAR.md, Frente 3); as outras acima do piso vão no alerta-resumo
+    dia_cota = est.get("individuais_dia", {})
+    ja_hoje = dia_cota.get(hoje, 0)
+    vagas = max(0, IMPERDIVEIS_POR_DIA - ja_hoje)
+    individuais = [x for x in novos if x.get("nivel", "Imperdível") == "Imperdível" and fresco(x)][:min(vagas, MAX_POR_LEITURA)]
+    for x in individuais:
         nome = x["nome"].replace("–", "-").replace("—", "-")
         texto = (f"{brl(x['por'])} na {x['loja']}, {x['desc'] * 100:.0f}% abaixo da média real de {brl(x['ref'])}."
                  + (" Menor preço do período." if x.get("recorde") else "")
                  + (" Achado da comunidade, vendedor não conferido." if x.get("comunidade") else "")
                  + (" Em Outras promoções (nota BGG abaixo de 7)." if x.get("principal") is False else ""))
         if enviar(f"−{x['desc'] * 100:.0f}% {nome}", texto, link=x.get("url") or PAGINA, tags="game_die,moneybag",
-                  prioridade="high" if x["desc"] >= 0.35 else "default", imagem=x.get("imagem")):
+                  prioridade="high" if x.get("nivel") == "Imperdível" or (x.get("nivel") is None and x["desc"] >= 0.35) else "default",
+                  imagem=x.get("imagem")):
             enviados += 1
             avisados[x["slug"]] = hoje
             pendentes.pop(x["slug"], None)
         else:
             pendentes.setdefault(x["slug"], dt.datetime.now(dt.timezone.utc).isoformat(timespec="minutes"))
-    resto = novos[MAX_POR_LEITURA:]
+    ids = {id(x) for x in individuais}
+    resto = [x for x in novos if id(x) not in ids]
     # todos os outros jogos novos saem no resumo, pelo nome e com o desconto (pedido do usuário em 04/11/2026)
     lista_resto = "; ".join(f"{x['nome']} (−{x['desc'] * 100:.0f}%)" for x in resto)
     if len(lista_resto) > 3500:  # limite do texto do alerta; o restante está na página
@@ -176,7 +199,8 @@ def avisar(radar_itens):
         for x in resto:
             avisados[x["slug"]] = hoje
             pendentes.pop(x["slug"], None)
-    ESTADO.write_text(json.dumps({"no_radar": sorted(melhor), "avisados": avisados, "pendentes": pendentes}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
+    ESTADO.write_text(json.dumps({"no_radar": sorted(melhor), "avisados": avisados, "pendentes": pendentes,
+                                  "individuais_dia": {hoje: ja_hoje + enviados}}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
                       encoding="utf-8")
     print(f"ok alertas: {len(novos)} jogos novos no radar acima do piso ({len(pequenas)} abaixo, só na página), {enviados} alertas enviados" + (f" e 1 resumo com {len(resto)}" if resto else ""))
 

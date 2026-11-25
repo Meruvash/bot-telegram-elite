@@ -5,7 +5,7 @@
 # Os dados ficam só no disco do servidor (radar/conteudo/black, radar/img/black, radar/black, telegram/estado.json).
 # A página /black/ vai para o bucket R2 da Cloudflare; o GitHub não recebe nada.
 #
-# Uso: rodar.sh <normal|ml|educado|alertas|telegram|notificacoes|auditoria>
+# Uso: rodar.sh <normal|ml|educado|alertas|telegram|notificacoes|auditoria|calibragem>
 set -u
 {
 ROBO="${1:-}"
@@ -21,6 +21,7 @@ case "$ROBO" in
   telegram)     BOT_ESTADO="${BOT_ESTADO:-$BASE/telegram/estado.json}" exec python3 "$BASE/telegram/bot.py" ;;
   notificacoes) exec python3 tools/notificacoes/vigia.py --sem-pausa ;;
   alertas)      exec python3 tools/black/alertas.py --fila ;;
+  calibragem)   exec python3 tools/black/calibrar.py treinar ;;
   normal|ml|educado|auditoria) ;;
   *) echo "robô desconhecido: $ROBO"; exit 1 ;;
 esac
