@@ -189,6 +189,20 @@ def avisar(radar_itens):
             pendentes.pop(x["slug"], None)
         else:
             pendentes.setdefault(x["slug"], dt.datetime.now(dt.timezone.utc).isoformat(timespec="minutes"))
+    # loja em promoção forte (docs/PLANO_RADAR.md, Frente 1, item 3): um alerta quando a loja entra no bloco, no
+    # máximo um por loja a cada 7 dias; fora da cota de Imperdíveis, porque fala de uma loja, não de um jogo
+    import nota  # noqa: E402
+    fortes = nota.lojas_fortes(radar_itens, excluir=radar.FORA)
+    lojas_avisadas = {lj: d for lj, d in est.get("lojas_avisadas", {}).items()
+                      if d >= (dt.date.today() - dt.timedelta(days=7)).isoformat()}
+    for lj, ofs in fortes.items():
+        if lj in lojas_avisadas or lj in est.get("lojas_fortes", []):
+            continue
+        txt = (f"{len(ofs)} ofertas com nota alta ao mesmo tempo, até {max(x['desc'] for x in ofs) * 100:.0f}% abaixo da média real. "
+               f"Destaques: " + "; ".join(f"{x['nome']} por {brl(x['por'])}" for x in ofs[:3]) + ". Todas no bloco da loja, no topo da página.")
+        if enviar(f"🏬 {lj} entrou em Black de verdade", txt, link=PAGINA + "#lojas-black", tags="game_die,department_store",
+                  prioridade="high"):
+            lojas_avisadas[lj] = hoje
     ids = {id(x) for x in individuais}
     resto = [x for x in novos if id(x) not in ids]
     # todos os outros jogos novos saem no resumo, pelo nome e com o desconto (pedido do usuário em 04/11/2026)
@@ -200,7 +214,8 @@ def avisar(radar_itens):
             avisados[x["slug"]] = hoje
             pendentes.pop(x["slug"], None)
     ESTADO.write_text(json.dumps({"no_radar": sorted(melhor), "avisados": avisados, "pendentes": pendentes,
-                                  "individuais_dia": {hoje: ja_hoje + enviados}}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
+                                  "individuais_dia": {hoje: ja_hoje + enviados}, "lojas_fortes": sorted(fortes),
+                                  "lojas_avisadas": lojas_avisadas}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
                       encoding="utf-8")
     print(f"ok alertas: {len(novos)} jogos novos no radar acima do piso ({len(pequenas)} abaixo, só na página), {enviados} alertas enviados" + (f" e 1 resumo com {len(resto)}" if resto else ""))
 
