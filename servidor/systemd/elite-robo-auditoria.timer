@@ -1,0 +1,12 @@
+# Auditoria dos links de oferta do /black/: a cada 6 horas.
+[Unit]
+Description=Robôs da Elite: agenda do robô auditoria
+
+[Timer]
+OnCalendar=*-*-* 00/6:41:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=elite-robo@auditoria.service
+
+[Install]
+WantedBy=timers.target

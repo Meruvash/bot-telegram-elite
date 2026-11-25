@@ -1,0 +1,12 @@
+# Plano B das notificações do sininho (só HTTP ao worker): a cada 15 minutos.
+[Unit]
+Description=Robôs da Elite: agenda do robô notificacoes
+
+[Timer]
+OnCalendar=*-*-* *:07/15:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=elite-robo@notificacoes.service
+
+[Install]
+WantedBy=timers.target

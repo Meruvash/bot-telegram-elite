@@ -1,0 +1,12 @@
+# Bot do Telegram (lê as listas públicas do site): a cada 15 minutos.
+[Unit]
+Description=Robôs da Elite: agenda do robô telegram
+
+[Timer]
+OnCalendar=*-*-* *:03/15:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=elite-robo@telegram.service
+
+[Install]
+WantedBy=timers.target

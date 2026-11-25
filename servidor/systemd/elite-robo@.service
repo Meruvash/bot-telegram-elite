@@ -1,0 +1,14 @@
+# Uma rodada de um robô (%i). Chamado pelos timers ao lado.
+# Sem ExecStartPre de git: o servidor NUNCA busca código sozinho. Código novo só com servidor/atualizar.sh, à mão.
+[Unit]
+Description=Robôs da Elite: robô %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=elite
+EnvironmentFile=/etc/elite-robos.env
+ExecStart=/opt/elite-robos/servidor/rodar.sh %i
+TimeoutStartSec=5h
+Nice=10

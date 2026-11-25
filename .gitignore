@@ -1,4 +1,14 @@
-estado.json
-estado.tmp
+# Dados dos robôs: ficam SÓ no disco do servidor, nunca no repositório (commits de dados derrubaram o repositório antigo)
+radar/conteudo/
+radar/img/
+radar/black/
+radar/pauta.json.novo
+radar/busca.json.novo
+telegram/estado.json
+telegram/estado.tmp
+copia/
+.venv/
+# Chaves
 .env
+*.env
 __pycache__/

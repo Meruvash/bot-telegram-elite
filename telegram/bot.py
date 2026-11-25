@@ -10,12 +10,12 @@ centenas de commits por semana) levaram à desativação do repositório antigo.
 Opcional: com TELEGRAM_CHAT_WHATSAPP (o seu chat privado com o bot), cada item também chega lá já formatado para
 o WhatsApp (*negrito* do WhatsApp, link no fim). No celular é só tocar e segurar, copiar e colar no Canal do WhatsApp.
 
-Uso:
-  python3 bot.py              uma rodada (o timer do systemd chama a cada 15 min)
+Uso (no servidor, o timer elite-robo-telegram chama servidor/rodar.sh telegram a cada 15 min):
+  python3 bot.py              uma rodada
   python3 bot.py --simular    mostra o que seria publicado, sem enviar nada e sem gravar estado
   python3 bot.py --teste      manda uma mensagem de teste para o canal (confere token e permissão)
 
-Variáveis (arquivo .env ao lado do bot.py, ou ambiente):
+Variáveis (no servidor, em /etc/elite-robos.env; para testar fora dele, um .env ao lado do bot.py):
   TELEGRAM_BOT_TOKEN       token do @BotFather (obrigatório)
   TELEGRAM_CANAL           @canal das promoções (e das notícias, se TELEGRAM_CANAL_NOTICIAS ficar vazio)
   TELEGRAM_CANAL_NOTICIAS  @canal só das notícias e resenhas (opcional)
