@@ -41,12 +41,36 @@ por ciclo** (cerca de 700 por semana). Usar o Actions como servidor permanente f
 
 Antes de cada commit neste repositório: `python3 checar_seguranca.py && python3 -m unittest discover -s telegram`.
 
+## Onde roda: Railway
+
+Um serviço só no Railway, construído pelo `Dockerfile`, com a agenda `railway/agenda.py` sempre ligada (ela faz o papel
+dos timers do systemd). Os dados ficam num **volume montado em `/dados`**; no primeiro início, com o volume vazio, a
+agenda abre `railway/semente-2026-11-24.tgz` (o histórico de preços do Radar até 24/11/2026). A semente é a única
+cópia de dados no repositório, gravada uma vez; os robôs nunca a atualizam.
+
+Configuração no painel do Railway:
+1. New Project → Deploy from GitHub repo → `Meruvash/bot-telegram-elite`.
+2. No serviço: Settings → **Replicas = 1** (dois processos publicariam em dobro).
+3. Botão direito no serviço → **Attach Volume** → mount path `/dados`.
+4. Variables: as chaves (lista abaixo). Robô que não tem a chave dele pula essa parte.
+5. Teste um robô: no serviço, aba de comandos, `python3 railway/agenda.py --agora telegram`.
+
+Variáveis: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `ML_CLIENT_ID`,
+`ML_CLIENT_SECRET`, `KEEPA_KEY`, `NTFY_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CANAL`, `TELEGRAM_CANAL_NOTICIAS`,
+`TELEGRAM_CHAT_WHATSAPP`. Para pausar robôs sem mexer no código: `DESLIGAR=educado,auditoria`.
+
+O Railway lê o repositório quando o código muda (deploy), como a Cloudflare faz com o site. Isso não é GitHub Actions,
+não faz commit e não roda nada no GitHub.
+
+O jeito antigo, com servidor próprio (`servidor/instalar.sh` e `systemd/`), continua valendo como alternativa.
+
 ## Estrutura
 
 ```
 radar/       cópia da parte do site que os robôs usam (tools/black, layout da página, fontes, logo)
              radar/ORIGEM.txt diz de qual commit do site ela veio
 telegram/    bot do Telegram
+railway/     agenda.py (agenda sempre ligada) e a semente dos dados
 servidor/    rodar.sh (uma rodada), publicar_r2.py, instalar.sh, atualizar.sh, systemd/ (agenda)
 ```
 

@@ -1,0 +1,9 @@
+requests
+Pillow
+beautifulsoup4
+lxml
+feedparser
+price-parser
+protego
+cryptography
+boto3

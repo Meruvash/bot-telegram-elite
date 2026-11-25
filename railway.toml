@@ -1,0 +1,9 @@
+# Configuração do Railway (lida pelo Railway quando o repositório muda; não é GitHub Actions).
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "python3 railway/agenda.py"
+restartPolicyType = "ALWAYS"
+numReplicas = 1

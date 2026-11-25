@@ -18,7 +18,7 @@ exec 9>"/tmp/elite-robo-$ROBO.lock"
 flock -n 9 || { echo "o robô $ROBO ainda está rodando; esta rodada fica para a próxima"; exit 0; }
 
 case "$ROBO" in
-  telegram)     BOT_ESTADO="$BASE/telegram/estado.json" exec python3 "$BASE/telegram/bot.py" ;;
+  telegram)     BOT_ESTADO="${BOT_ESTADO:-$BASE/telegram/estado.json}" exec python3 "$BASE/telegram/bot.py" ;;
   notificacoes) exec python3 tools/notificacoes/vigia.py --sem-pausa ;;
   alertas)      exec python3 tools/black/alertas.py --fila ;;
   normal|ml|educado|auditoria) ;;

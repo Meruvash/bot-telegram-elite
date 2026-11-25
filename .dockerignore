@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__
+radar/conteudo
+radar/img
+radar/black
+copia
+telegram/estado.json
+.env
