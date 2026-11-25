@@ -9,7 +9,7 @@ Feito em 25/11/2026, com os dados do radar de 24/11 e a auditoria de 20/11.
 | Jogos acompanhados | 6.912 | só 2.359 têm os 28 dias de histórico que o radar exige (a base tem 52 dias) |
 | Ofertas no radar | 64, desconto real mediano de 27% | bom: o critério é honesto |
 | Economia em reais | mediana de R$ 38 | 24 das 64 economizam menos de R$ 30; 13 custam menos de R$ 50 |
-| Concentração | 16 das 64 são da Place Games | a página fica com cara de vitrine de uma loja |
+| Concentração | 16 das 64 são da Place Games | várias são ofertas pequenas que sobem só pelo percentual |
 | Lojas lidas direto | 75 | 47 estavam "em descanso" (bloqueio ou limite) em 23/11 |
 | Origem dos preços | 11.006 via Compara Jogos, 1.329 via API do Mercado Livre, 139 via feed de loja | quase tudo depende de uma fonte só |
 | Achados da comunidade | 932 em 7 dias | só 278 (30%) têm preço de referência; o resto não dá para dizer se é bom |
@@ -32,7 +32,12 @@ Nada de urgência falsa, contagem regressiva inventada ou "últimas unidades" se
    - confiança (loja conferida na página pesa mais que achado de canal).
 2. **Piso para destaque:** oferta com economia menor que R$ 30 ou preço menor que R$ 50 continua na página, mas
    não vai para o topo nem vira alerta. (Sugestão da auditoria de 20/11, ainda não feita.)
-3. **Limite por loja no topo:** no máximo 3 ofertas da mesma loja entre as 12 primeiras.
+3. **Variedade sem esconder oferta boa** (decisão do dono em 25/11: nada de limite por loja, porque uma loja pode
+   fazer uma Black de verdade com dezenas de ofertas):
+   - a ordem é sempre pela nota da oferta; só no empate (notas quase iguais) vem antes a de outra loja ou de outro
+     tipo de jogo;
+   - loja com muitas ofertas boas ao mesmo tempo (8 ou mais com nota alta) ganha um bloco próprio no topo, com
+     todas dentro, e um alerta "a loja X entrou em Black de verdade".
 4. **Preço final de verdade:** quando há cupom válido da loja (já lemos 73 cupons), mostrar o preço com cupom e
    usar esse preço na nota.
 5. **Referência para os achados da comunidade:** subir de 30% para 60% ou mais com casamento melhor de nomes;
@@ -105,8 +110,8 @@ Sem medir, não dá para saber o que funciona. Tudo sem cookie de terceiros e se
 
 | Quando | O quê | Por quê |
 |---|---|---|
-| **Agora (1 a 2 dias)** | vigia dos robôs; piso de R$ 30 / R$ 50 no destaque; limite por loja no topo; chave do Keepa e do ntfy | rápido, e já melhora a página na semana da Black |
-| **Semana 1** | nota da oferta; três níveis de alerta; resumo das 12h e das 19h; confirmar antes de avisar | muda a qualidade do que chega às pessoas |
+| **Agora (1 a 2 dias)** | vigia dos robôs; piso de R$ 30 / R$ 50 no destaque; chave do Keepa e do ntfy | rápido, e já melhora a página na semana da Black |
+| **Semana 1** | nota da oferta (com variedade no desempate e bloco da loja em promoção forte); três níveis de alerta; resumo das 12h e das 19h; confirmar antes de avisar | muda a qualidade do que chega às pessoas |
 | **Semana 2** | prioridade de leitura em três faixas; mais feeds de loja; contador de cliques | eficiência e medição |
 | **Semana 3 e 4** | lista de desejos (site e Telegram); "novas desde a última visita"; gráfico de preço | o que cria o hábito de voltar |
 | **Dezembro** | contato com as lojas; "Radar de Ofertas" permanente; filtros | consolidar depois da Black |
