@@ -44,6 +44,18 @@ class TestNota(unittest.TestCase):
         self.assertEqual(nota.nivel(10), "Boa")
 
 
+class TestLojasFortes(unittest.TestCase):
+    def test_bloco_so_com_8_jogos_de_nota_alta_e_sem_marketplace(self):
+        import re
+        boas = [{"slug": f"j{i}", "loja": "Loja A", "nivel": "Muito boa", "nota": 60 - i, "desc": 0.3} for i in range(8)]
+        poucas = [{"slug": f"k{i}", "loja": "Loja B", "nivel": "Imperdível", "nota": 70, "desc": 0.4} for i in range(7)]
+        fracas = [{"slug": f"m{i}", "loja": "Loja C", "nivel": "Boa", "nota": 40, "desc": 0.25} for i in range(9)]
+        ml = [{"slug": f"n{i}", "loja": "Mercado Livre", "nivel": "Imperdível", "nota": 80, "desc": 0.4} for i in range(9)]
+        f = nota.lojas_fortes(boas + poucas + fracas + ml, excluir=re.compile("mercado ?livre", re.I))
+        self.assertEqual(list(f), ["Loja A"])
+        self.assertEqual(len(f["Loja A"]), 8)
+
+
 class TestCalibragem(unittest.TestCase):
     def test_auc(self):
         import calibrar

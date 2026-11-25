@@ -147,6 +147,28 @@ def variedade(itens, chave="loja"):
     return saida
 
 
+LOJA_FORTE_MIN = 8  # docs/PLANO_RADAR.md, Frente 1, item 3: loja com 8+ ofertas boas ao mesmo tempo ganha bloco próprio
+
+
+def lojas_fortes(itens, minimo=LOJA_FORTE_MIN, excluir=None):
+    """Lojas em promoção forte: {loja: [ofertas]} com as ofertas de nota alta (Imperdível ou Muito boa) da loja, uma
+    por jogo, só para lojas com `minimo` jogos ou mais nessa condição. A loja com mais ofertas vem primeiro.
+    `excluir` (regex) tira marketplaces: no Mercado Livre e na Amazon cada oferta é de um vendedor, e um bloco
+    "a loja entrou em Black" seria enganoso. Achado da comunidade também fica fora (vendedor não conferido)."""
+    por_loja = {}
+    for x in itens:
+        if x.get("nivel") not in ("Imperdível", "Muito boa") or not x.get("loja") or x.get("comunidade"):
+            continue
+        if excluir is not None and excluir.search(x["loja"]):
+            continue
+        jogos = por_loja.setdefault(x["loja"], {})
+        if x["slug"] not in jogos or x.get("nota", 0) > jogos[x["slug"]].get("nota", 0):
+            jogos[x["slug"]] = x
+    fortes = {loja: sorted(j.values(), key=lambda x: (-x.get("nota", 0), -x["desc"]))
+              for loja, j in por_loja.items() if len(j) >= minimo}
+    return dict(sorted(fortes.items(), key=lambda kv: (-len(kv[1]), kv[0])))
+
+
 def carregar_pesos():
     """Pesos calibrados (conteudo/black/nota_pesos.json), se existirem; senão, os de partida."""
     try:

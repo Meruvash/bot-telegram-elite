@@ -116,6 +116,12 @@ CSS = """<style>
 .bk-cont{margin:0;font-size:.82rem;color:var(--muted)}
 @media (min-width:900px){.bk-filtros{grid-template-columns:auto 1fr auto auto;align-items:center}.bk-linha2{grid-column:2}.bk-cont{text-align:right}}
 .ofertas{display:grid;gap:10px;margin:12px 0 0;padding:0;list-style:none}
+.lj-ofertas{display:grid;gap:10px;margin:10px 0 0;padding:0;list-style:none}
+.lj{margin-top:12px;border:1px solid #3a3320;border-radius:14px;background:#15130d;padding:4px 12px 12px}
+.lj summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-height:46px;padding-top:10px}
+.lj summary::-webkit-details-marker{display:none}
+.lj summary b{color:var(--gold);font-size:1.1rem}.lj summary span{color:var(--muted);font-size:.9rem}
+.lj summary::after{content:"+";margin-left:auto;color:var(--gold);font-weight:900}.lj[open] summary::after{content:"−"}
 @media (min-width:760px){.ofertas{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:1080px){.ofertas{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .ofertas .of[hidden]{display:none}
@@ -526,6 +532,17 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     lista_html = em_ordem({x["slug"]: grupos[x["slug"]] for x in melhor.values()})
     outras_html = em_ordem(g_outras)
     dest_html = "".join(cartao(todos_g[sl], pre, cps, agora_, destaque=True, novo=quando(entrou[sl])) for sl in ordem[:N_NOVIDADES])
+    # Lojas em Black de verdade (docs/PLANO_RADAR.md, Frente 1, item 3): loja com 8+ ofertas de nota alta ao mesmo tempo
+    # ganha um bloco no topo com todas; nada de limite por loja (decisão do dono, 25/11/2026). Marketplace fica fora.
+    import nota  # noqa: E402 (mesmo diretório)
+    fortes = nota.lojas_fortes(list(radar_itens) + list(outras), excluir=radar.FORA)
+    lojas_html = ""
+    for i, (lj, ofs) in enumerate(fortes.items()):
+        eco_lj = sum(x["ref"] - x["por"] for x in ofs)
+        lojas_html += (f'<details class="lj"{" open" if i == 0 else ""}><summary><b>🏬 {e(lj)}</b>'
+                       f'<span>{len(ofs)} ofertas com nota alta · até −{pct(max(x["desc"] for x in ofs))} · '
+                       f'{brl(eco_lj)} de economia somada</span></summary>'
+                       f'<ul class="lj-ofertas">{"".join(cartao([x], pre, cps, agora_) for x in ofs)}</ul></details>')
     n_outras = len(g_outras)
     total = len(melhor) + n_outras
     maior = max([maior, *(x["desc"] for x in outras)], default=maior)
@@ -721,6 +738,11 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
   <p class="sub">Fora dos jogos de tabuleiro, um vigia à parte: console PS5 novo (Slim, Digital ou Pro) por menos de R$ 3.000 à vista. No Mercado Livre, só loja oficial ou MercadoLíder, lido pela API oficial; das outras lojas, só achado que alguém abriu na página da loja. Usado, recondicionado, importado e acessório ficam fora. Preço com mais de 4 dias sai sozinho.</p>
   {f'<ul class="cupons">{ps5_html}</ul>' if ps5_html else f'<p class="vazio">{ps5_vazio}</p>'}
  </section>
+ {f"""<section id="lojas-black" aria-labelledby="h-lojas">
+  <h2 id="h-lojas">Lojas em Black de verdade</h2>
+  <p class="sub">Quando uma loja tem {nota.LOJA_FORTE_MIN} ou mais ofertas com nota alta ao mesmo tempo, ela ganha um bloco aqui com todas elas. As mesmas ofertas continuam na lista geral. Marketplaces (Mercado Livre, Amazon) ficam fora: lá cada oferta é de um vendedor.</p>
+  {lojas_html}
+ </section>""" if lojas_html else ""}
  <section id="melhores" aria-labelledby="h-melhores">
   <h2 id="h-melhores">Últimas novidades</h2>
   <p class="sub">As ofertas que acabaram de entrar no radar, a mais nova primeiro. Muda a cada leitura, de 30 em 30 minutos.</p>

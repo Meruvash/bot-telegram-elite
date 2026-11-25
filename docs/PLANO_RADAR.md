@@ -135,4 +135,8 @@ Sem medir, não dá para saber o que funciona. Tudo sem cookie de terceiros e se
 - **Calibragem automática** (`tools/black/calibrar.py`, robô `calibragem`): os pesos da nota aprendem com os posts dos
   canais de curadoria e, quando existir, com os cliques (`conteudo/black/cliques.json`). Só trocam com 150+ positivos e
   acerto melhor que o atual. Na primeira medição (77 positivos) não trocou.
-- Falta: bloco da loja em promoção forte, preço com cupom na nota, confirmar a página antes de avisar, contador de cliques.
+- **Lojas em Black de verdade:** loja com 8+ jogos de nota alta (Imperdível ou Muito boa) ao mesmo tempo ganha bloco
+  no topo da página, antes de Últimas novidades, com todas as ofertas, e um alerta "a loja X entrou em Black de
+  verdade" (um por loja a cada 7 dias, fora da cota de Imperdíveis). Marketplaces e achados da comunidade ficam fora:
+  lá cada oferta é de um vendedor. Com os dados de 23/11, a Place Games (8 ofertas) teria o bloco.
+- Falta: preço com cupom na nota, confirmar a página antes de avisar, contador de cliques.
