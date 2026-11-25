@@ -57,7 +57,23 @@ Configuração no painel do Railway:
 
 Variáveis: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `ML_CLIENT_ID`,
 `ML_CLIENT_SECRET`, `KEEPA_KEY`, `NTFY_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CANAL`, `TELEGRAM_CANAL_NOTICIAS`,
-`TELEGRAM_CHAT_WHATSAPP`. Para pausar robôs sem mexer no código: `DESLIGAR=educado,auditoria`.
+`TELEGRAM_CHAT_WHATSAPP`, `TELEGRAM_CHAT_AVISOS`. Para pausar robôs sem mexer no código: `DESLIGAR=educado,auditoria`.
+
+**Vigia:** a agenda confere a cada 5 minutos e avisa no Telegram privado (`TELEGRAM_CHAT_AVISOS`, ou o chat de
+`TELEGRAM_CHAT_WHATSAPP`) quando:
+- um robô fica sem terminar uma rodada sem erro por 2 h (o educado, por 8 h);
+- um robô erra 2 vezes seguidas;
+- a página `/black/` fica 3 h sem ser refeita.
+
+O mesmo aviso só se repete depois de 6 h, e chega um "resolvido" quando o problema passa.
+
+**Cuidado com deploy:** cada envio ao repositório faz o Railway reiniciar o serviço, o que interrompe o robô que
+estiver rodando (o educado leva até 4 h). Os dados não se perdem (há cópia antes de cada rodada), mas a leitura
+daquela rodada sim. Prefira enviar mudanças longe dos minutos :05 e :35.
+
+**Piso do destaque** (`radar/tools/black/radar.py`, `DESTAQUE_ECONOMIA_MIN` e `DESTAQUE_PRECO_MIN`): oferta que
+economiza menos de R$ 30 ou custa menos de R$ 50 fica na página, mas não entra em "Últimas novidades", não vira
+cartão "Destaque" nem alerta.
 
 O Railway lê o repositório quando o código muda (deploy), como a Cloudflare faz com o site. Isso não é GitHub Actions,
 não faz commit e não roda nada no GitHub.

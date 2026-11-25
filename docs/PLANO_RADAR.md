@@ -110,7 +110,7 @@ Sem medir, não dá para saber o que funciona. Tudo sem cookie de terceiros e se
 
 | Quando | O quê | Por quê |
 |---|---|---|
-| **Agora (1 a 2 dias)** | vigia dos robôs; piso de R$ 30 / R$ 50 no destaque; chave do Keepa e do ntfy | rápido, e já melhora a página na semana da Black |
+| **Agora (1 a 2 dias)** ✅ vigia e piso feitos em 25/11 | vigia dos robôs; piso de R$ 30 / R$ 50 no destaque; chave do Keepa e do ntfy | rápido, e já melhora a página na semana da Black |
 | **Semana 1** | nota da oferta (com variedade no desempate e bloco da loja em promoção forte); três níveis de alerta; resumo das 12h e das 19h; confirmar antes de avisar | muda a qualidade do que chega às pessoas |
 | **Semana 2** | prioridade de leitura em três faixas; mais feeds de loja; contador de cliques | eficiência e medição |
 | **Semana 3 e 4** | lista de desejos (site e Telegram); "novas desde a última visita"; gráfico de preço | o que cria o hábito de voltar |

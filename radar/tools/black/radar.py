@@ -51,6 +51,18 @@ QUASE = 0.15         # "Quase Black": de 15% a menos de 20% (seção à parte, p
 NOTA_MIN = 7.0
 PRECO_MAX_HORAS = 96  # preço visto há mais de 4 dias não vai ao ar (auditoria de 20/11/2026: havia oferta de 9 e 13 dias)
 SUSPEITO = 0.45      # oferta abaixo de 45% da referência: provável anúncio de outro produto; fica fora
+# Piso do destaque (decisão do dono em 25/11/2026): oferta que economiza menos de R$ 30, ou que custa menos de
+# R$ 50, continua na página, mas não vai para "Últimas novidades", não vira cartão "Destaque" nem alerta.
+DESTAQUE_ECONOMIA_MIN = 30.0
+DESTAQUE_PRECO_MIN = 50.0
+
+
+def vale_destaque(x):
+    """Oferta grande o bastante para topo, destaque e alerta: economia de R$ 30 ou mais e preço de R$ 50 ou mais."""
+    por, ref = x.get("por"), x.get("ref")
+    if not por or not ref:
+        return False
+    return por >= DESTAQUE_PRECO_MIN and (ref - por) >= DESTAQUE_ECONOMIA_MIN
 FORA = re.compile(r"amazon|mercado ?livre|shopee|magalu|magazine|americanas|casas ?bahia|aliexpress|shein|brech[oó]|usad|seminov", re.I)
 PREMIOS_OK = ("Golden Geek", "Spiel des Jahres", "Kennerspiel des Jahres")
 

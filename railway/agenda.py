@@ -10,6 +10,7 @@ preços incluído), para nada recomeçar do zero.
 Horários em UTC, os mesmos do servidor/systemd/. Nada aqui fala com o GitHub.
 """
 import datetime as dt
+import json
 import os
 import subprocess
 import sys
@@ -67,6 +68,86 @@ def preparar():
     os.environ["ELITE_ROBOS"] = str(APP)
 
 
+# Vigia (25/11/2026): avisa no Telegram privado quando um robô para de terminar bem ou a página para de mudar.
+# Prazo = tempo sem nenhuma rodada que termine com código 0. O educado roda a cada 3 h e pode levar 4 h.
+PRAZO_H = {"normal": 2, "ml": 2, "educado": 8, "alertas": 1, "telegram": 1}
+PAGINA_H = 3            # black/index.html sem mudar por mais que isso
+FALHAS_SEGUIDAS = 2     # rodadas seguidas com erro
+REPETIR_H = 6           # o mesmo problema só é avisado de novo depois disso
+VIGIA = DADOS / "vigia.json"
+
+
+def _ler_vigia():
+    try:
+        return json.loads(VIGIA.read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return {}
+
+
+def _gravar_vigia(v):
+    try:
+        VIGIA.write_text(json.dumps(v, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def avisar_dono(texto):
+    """Manda o aviso para o chat privado do dono (TELEGRAM_CHAT_AVISOS, ou o chat dos textos do WhatsApp)."""
+    log(texto.replace("\n", " | "))
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat = os.environ.get("TELEGRAM_CHAT_AVISOS") or os.environ.get("TELEGRAM_CHAT_WHATSAPP")
+    if not token or not chat:
+        return
+    try:
+        sys.path.insert(0, str(APP / "telegram"))
+        import bot
+        r = bot.Telegram(token).texto(bot.canal(chat), texto)
+        if not r.get("ok"):
+            log(f"vigia: Telegram recusou o aviso ({r.get('description')})")
+    except Exception as ex:  # aviso que falha não derruba a agenda
+        log(f"vigia: não consegui avisar no Telegram ({ex})")
+
+
+def problemas(estado, ligados, agora):
+    """Lista de (chave, texto) dos problemas de agora."""
+    res = []
+    for robo, horas in PRAZO_H.items():
+        if robo not in ligados:
+            continue
+        ok = estado["ultimo_ok"].get(robo) or estado["inicio"]
+        parado = (agora - dt.datetime.fromisoformat(ok)).total_seconds() / 3600
+        if parado > horas:
+            res.append((f"parado:{robo}", f"o robô {robo} não termina uma rodada sem erro há {parado:.0f} h (o normal é até {horas} h)"))
+        if estado["falhas"].get(robo, 0) >= FALHAS_SEGUIDAS:
+            res.append((f"falha:{robo}", f"o robô {robo} terminou com erro {estado['falhas'][robo]} vezes seguidas"))
+    pag = RADAR / "black" / "index.html"
+    desde_inicio = (agora - dt.datetime.fromisoformat(estado["inicio"])).total_seconds() / 3600
+    if pag.exists() and desde_inicio > PAGINA_H:
+        idade = (agora.timestamp() - pag.stat().st_mtime) / 3600
+        if idade > PAGINA_H:
+            res.append(("pagina", f"a página /black/ não é refeita há {idade:.0f} h"))
+    return res
+
+
+def vigiar(estado, ligados, agora):
+    v = _ler_vigia()
+    avisados = v.setdefault("avisados", {})
+    atuais = dict(problemas(estado, ligados, agora))
+    for chave, texto in atuais.items():
+        ultimo = avisados.get(chave)
+        if not ultimo or (agora - dt.datetime.fromisoformat(ultimo)).total_seconds() > REPETIR_H * 3600:
+            avisar_dono(f"⚠️ Radar Black: {texto}.\nVeja os logs no Railway (Deployments → View logs).")
+            avisados[chave] = agora.isoformat()
+    # logo depois de ligar (deploy novo) ainda não dá para saber se um problema antigo passou: não fecha nada
+    if (agora - dt.datetime.fromisoformat(estado["inicio"])).total_seconds() < max(PRAZO_H.values()) * 3600 / 4:
+        _gravar_vigia(v)
+        return
+    for chave in [c for c in avisados if c not in atuais]:
+        avisar_dono(f"✅ Radar Black: resolvido ({chave.split(':')[-1]}).")
+        del avisados[chave]
+    _gravar_vigia(v)
+
+
 def na_hora(robo, agora):
     minutos, horas = AGENDA[robo]
     return agora.minute in minutos and (horas is None or agora.hour in horas)
@@ -78,6 +159,8 @@ def main():
     log(f"agenda no ar; robôs ligados: {', '.join(ligados)}" + (f"; desligados: {', '.join(sorted(DESLIGADOS))}" if DESLIGADOS else ""))
     rodando = {}
     ultimo = None
+    inicio = dt.datetime.now(dt.timezone.utc).isoformat()
+    estado = {"inicio": inicio, "ultimo_ok": {}, "falhas": {}}
     if "--agora" in sys.argv:  # teste: roda um robô na hora e sai (ex.: python3 railway/agenda.py --agora telegram)
         robo = sys.argv[sys.argv.index("--agora") + 1]
         sys.exit(subprocess.call(["bash", str(APP / "servidor" / "rodar.sh"), robo]))
@@ -86,9 +169,16 @@ def main():
         for robo, proc in list(rodando.items()):
             if proc.poll() is not None:
                 log(f"robô {robo} terminou (código {proc.returncode})")
+                if proc.returncode == 0:
+                    estado["ultimo_ok"][robo] = dt.datetime.now(dt.timezone.utc).isoformat()
+                    estado["falhas"][robo] = 0
+                else:
+                    estado["falhas"][robo] = estado["falhas"].get(robo, 0) + 1
                 del rodando[robo]
         if agora != ultimo:
             ultimo = agora
+            if agora.minute % 5 == 0:
+                vigiar(estado, ligados, agora)
             for robo in ligados:
                 if na_hora(robo, agora):
                     if robo in rodando:

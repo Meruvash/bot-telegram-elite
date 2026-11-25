@@ -126,6 +126,8 @@ def _publicar(titulo, texto, link=PAGINA, tags="game_die", prioridade="default",
 
 def avisar(radar_itens):
     """Alerta os jogos que entraram no radar desde a última leitura."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import radar  # noqa: E402  (aqui dentro: o radar também importa este módulo)
     melhor = {}
     for x in radar_itens:
         if x["slug"] not in melhor or x["desc"] > melhor[x["slug"]]["desc"]:
@@ -145,6 +147,11 @@ def avisar(radar_itens):
     limite = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=6)).isoformat()
     pendentes = {s: h for s, h in est.get("pendentes", {}).items() if h >= limite and s in melhor}
     novos = [x for s, x in melhor.items() if (s not in antes or s in pendentes) and avisados.get(s) != hoje]
+    # piso do destaque (25/11/2026): oferta que economiza menos de R$ 30 ou custa menos de R$ 50 fica só na página
+    pequenas = [x for x in novos if not radar.vale_destaque(x)]
+    novos = [x for x in novos if radar.vale_destaque(x)]
+    for x in pequenas:
+        pendentes.pop(x["slug"], None)
     novos.sort(key=lambda x: -x["desc"])
     enviados = 0
     for x in novos[:MAX_POR_LEITURA]:
@@ -171,7 +178,7 @@ def avisar(radar_itens):
             pendentes.pop(x["slug"], None)
     ESTADO.write_text(json.dumps({"no_radar": sorted(melhor), "avisados": avisados, "pendentes": pendentes}, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
                       encoding="utf-8")
-    print(f"ok alertas: {len(novos)} jogos novos no radar, {enviados} alertas enviados" + (f" e 1 resumo com {len(resto)}" if resto else ""))
+    print(f"ok alertas: {len(novos)} jogos novos no radar acima do piso ({len(pequenas)} abaixo, só na página), {enviados} alertas enviados" + (f" e 1 resumo com {len(resto)}" if resto else ""))
 
 
 if __name__ == "__main__":

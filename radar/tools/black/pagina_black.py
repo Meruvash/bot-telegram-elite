@@ -493,14 +493,17 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     exata = lambda v: v if v and len(v) > 10 else ""
     ordem = sorted(todos_g, key=lambda sl: (exata(entrou[sl]), str(todos_g[sl][0].get("verificado") or "")), reverse=True)
     # regra do usuário (05/11/2026): em Últimas novidades só entra jogo com foto (o cartão sem foto vira ilustração)
-    ordem = [sl for sl in ordem if capa(todos_g[sl][0], pre, 640)]
+ # piso do destaque (25/11/2026): economia de R$ 30 ou mais e preço de R$ 50 ou mais
+    ordem = [sl for sl in ordem if capa(todos_g[sl][0], pre, 640) and radar.vale_destaque(todos_g[sl][0])]
     top = [todos_g[sl][0] for sl in ordem[:N_NOVIDADES]]
 
     # Listas na ordem do usuário (04/11/2026): os mais recentes em cima, os mais antigos embaixo e, a cada
     # DESTAQUE_CADA cartões, um destaque com o maior desconto que ainda não apareceu (sem repetir cartão)
     def em_ordem(gs):
         cron = sorted(gs, key=lambda sl: (exata(entrou.get(sl, "")), str(gs[sl][0].get("verificado") or "")), reverse=True)
-        por_desc = sorted(gs, key=lambda sl: -gs[sl][0]["desc"])[:max(1, len(gs) // DESTAQUE_CADA)]
+        # só vira destaque quem passa no piso (25/11/2026); os outros seguem na lista, na ordem de entrada
+        grandes = [sl for sl in gs if radar.vale_destaque(gs[sl][0])]
+        por_desc = sorted(grandes, key=lambda sl: -gs[sl][0]["desc"])[:max(1, len(gs) // DESTAQUE_CADA)] if grandes else []
         dest = [sl for sl in por_desc]
         fila = [sl for sl in cron if sl not in dest]
         saida, i = [], 0
