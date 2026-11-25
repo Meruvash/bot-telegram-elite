@@ -8,7 +8,8 @@
 1. **Chaves nunca aparecem no chat.** Copie cada chave da Cloudflare direto para o campo do Railway. Não escreva
    chave nenhuma na conversa, em arquivo nem em print.
 2. **Pare e pergunte** antes de:
-   - qualquer tela de pagamento, cartão ou troca de plano;
+   - qualquer tela de pagamento, cartão ou troca de plano (o Railway já está no plano Pro; a Cloudflare pode pedir
+     cartão só para ativar o R2);
    - apagar qualquer coisa;
    - mexer em algo que não esteja neste roteiro (outros projetos do Railway, como o Radar de Teses, ou outros sites
      da Cloudflare).
@@ -74,8 +75,9 @@
 
 1. Abra https://railway.com e peça à pessoa para entrar com o **GitHub (`Meruvash`)**. É a mesma conta do projeto
    do Radar de Teses.
-2. Se aparecer aviso de plano (Trial vencido, "upgrade to Hobby"): **pare e pergunte**. O Hobby custa US$ 5 por
-   mês, com US$ 5 de uso incluídos.
+2. A conta já está no **plano Pro** do Railway. Não troque de plano nem mexa em cobrança. Se aparecer qualquer
+   aviso de plano ou pagamento, **pare e pergunte**. Se houver mais de um workspace, crie o projeto no
+   **workspace do plano Pro** (o mesmo do Radar de Teses).
 3. **New** (ou "+ New Project") → **Deploy from GitHub repo** → `Meruvash/bot-telegram-elite`.
    - Se o repositório não aparecer: **Configure GitHub App** → libere o acesso a `bot-telegram-elite` → volte e
      escolha.
@@ -193,4 +195,4 @@ Pendências / erros:
 | Pausar robôs | Railway → Variables → `DESLIGAR=educado,auditoria` (nomes separados por vírgula) |
 | Ver o que cada robô fez | Railway → Deployments → View logs |
 | Atualizar o código | basta enviar ao repositório; o Railway monta de novo sozinho |
-| Custo | Railway → Usage (deve ficar perto dos US$ 5 incluídos no Hobby) |
+| Custo | Railway → Usage (o uso dos robôs entra na conta do plano Pro, junto com o Radar de Teses) |
