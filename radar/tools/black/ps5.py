@@ -124,6 +124,17 @@ def vitrine():
     return sorted(saida, key=lambda a: a["preco"]), dados
 
 
+def mais_barato(dados=None):
+    """O PS5 mais barato encontrado até agora, mesmo acima do limite (pedido do dono em 27/11/2026: quando não houver
+    PS5 abaixo do limite, a página mostra o link da oferta de menor valor). Mesmas regras da vitrine, sem o limite:
+    console novo de verdade, link direto sem afiliado, preço visto há menos de radar.PRECO_MAX_HORAS."""
+    dados = dados if dados is not None else ler_arquivo()
+    validos = [a for a in dados.get("api", []) + dados.get("manuais", [])
+               if a.get("preco") and not radar.preco_velho(a.get("verificado")) and eh_console(a.get("modelo"), a["preco"])
+               and a.get("url") and not radar.afiliado(a["url"]) and not radar._AFILIADO_PUBLICO.search(a["url"])]
+    return min(validos, key=lambda a: a["preco"]) if validos else None
+
+
 def limite_txt():
     """"R$ 3.700", para os textos da página e dos alertas."""
     return "R$ " + f"{LIMITE:,.0f}".replace(",", ".")

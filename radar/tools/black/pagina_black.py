@@ -659,6 +659,10 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     # PlayStation 5 abaixo de ps5.LIMITE (pedido do usuário em 20/11/2026; R$ 3.700 desde 25/11): seção própria
     import ps5
     ps5_itens, ps5_dados = ps5.vitrine()
+    # sem PS5 abaixo do limite: mostra o mais barato encontrado até agora, com o link (pedido do dono em 27/11/2026)
+    ps5_barato = None if ps5_itens else ps5.mais_barato(ps5_dados)
+    if ps5_barato:
+        ps5_itens = [{**ps5_barato, "observacao": f"Ainda acima de {ps5.limite_txt()}: é o PS5 novo mais barato que o robô encontrou até agora."}]
     ps5_html = "".join(
         f'<li class="cup-c"><span class="cup-img">{ilustra(a["modelo"], a["loja"])}</span>'
         f'<p class="cup-loja">{e(a["modelo"])}</p>'
