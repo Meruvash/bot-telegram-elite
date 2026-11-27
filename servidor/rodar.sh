@@ -56,6 +56,9 @@ for f in conteudo/black/*.json; do
     || { echo "JSON quebrado, volta a cópia: $f"; cp -a "$COPIA/$(basename "$f")" "$f" 2>/dev/null || true; }
 done
 
+# link de afiliado de terceiros sai dos dados antes da trava, para um post não parar a publicação (27/11/2026)
+timeout 2m python3 tools/black/limpar_afiliados.py || echo "aviso: não consegui limpar os links de afiliado"
+
 exec 8>/tmp/elite-robo-publicar.lock
 # espera a vez de publicar no máximo 20 min: uma publicação travada não pode parar todos os robôs (27/11/2026)
 flock -w 1200 8 || { echo "a trava de publicação está presa há 20 min; esta rodada não publica"; exit 1; }
