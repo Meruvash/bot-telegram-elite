@@ -12,6 +12,7 @@ Horários em UTC, os mesmos do servidor/systemd/. Nada aqui fala com o GitHub.
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -149,6 +150,58 @@ def vigiar(estado, ligados, agora):
     _gravar_vigia(v)
 
 
+# Tempo máximo de uma rodada (27/11/2026: a página parou às 13h03 sem aviso visível de fora). Passou disso, a agenda
+# encerra o robô para ele não segurar a vez dos outros; o rodar.sh já tem timeouts, isto é a rede de segurança.
+MAX_MIN = {"normal": 45, "ml": 45, "educado": 270, "auditoria": 70}
+MAX_PADRAO = 30
+LOGS = DADOS / "logs"
+URL = re.compile(r"https?://\S+")
+
+
+def saude(estado, rodando, comeco, agora):
+    """Grava radar/black/saude/estado.json e envia ao R2: fica em eliteboardgamers.com.br/black/saude/estado.json,
+    para dar para ver de fora (sem entrar no Railway) se cada robô roda, quando terminou bem e as últimas linhas do log
+    (sem links)."""
+    robos = {}
+    for robo in AGENDA:
+        try:
+            cauda = [URL.sub("<link>", l)[:240] for l in (LOGS / f"{robo}.log").read_text(encoding="utf-8", errors="ignore").splitlines() if l.strip()][-12:]
+        except OSError:
+            cauda = []
+        robos[robo] = {"rodando_desde": comeco.get(robo) if robo in rodando else None, "ultimo_ok": estado["ultimo_ok"].get(robo),
+                       "falhas_seguidas": estado["falhas"].get(robo, 0), "log": cauda}
+    pag = RADAR / "black" / "index.html"
+    dados = {"agora": agora.isoformat(), "agenda_desde": estado["inicio"],
+             "pagina_refeita": dt.datetime.fromtimestamp(pag.stat().st_mtime, dt.timezone.utc).isoformat() if pag.exists() else None,
+             "robos": robos}
+    destino = RADAR / "black" / "saude"
+    try:
+        destino.mkdir(parents=True, exist_ok=True)
+        (destino / "estado.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
+        subprocess.run([sys.executable, str(APP / "servidor" / "publicar_r2.py"), "black/saude"], timeout=120,
+                       capture_output=True)
+    except Exception as ex:  # a saúde nunca derruba a agenda
+        log(f"saúde: não consegui gravar ou enviar ({ex})")
+
+
+def iniciar(robo):
+    """Roda o robô guardando a saída em /dados/logs/<robo>.log (para a saúde) e mostrando no log do Railway."""
+    LOGS.mkdir(parents=True, exist_ok=True)
+    cmd = f'bash "{APP / "servidor" / "rodar.sh"}" {robo} 2>&1 | tee "{LOGS / (robo + ".log")}"'
+    return subprocess.Popen(["bash", "-o", "pipefail", "-c", cmd], start_new_session=True)
+
+
+def encerrar(proc):
+    import signal
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+        time.sleep(10)
+        if proc.poll() is None:
+            os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
 def na_hora(robo, agora):
     minutos, horas = AGENDA[robo]
     return agora.minute in minutos and (horas is None or agora.hour in horas)
@@ -158,7 +211,7 @@ def main():
     preparar()
     ligados = [r for r in AGENDA if r not in DESLIGADOS]
     log(f"agenda no ar; robôs ligados: {', '.join(ligados)}" + (f"; desligados: {', '.join(sorted(DESLIGADOS))}" if DESLIGADOS else ""))
-    rodando = {}
+    rodando, comeco = {}, {}
     ultimo = None
     inicio = dt.datetime.now(dt.timezone.utc).isoformat()
     estado = {"inicio": inicio, "ultimo_ok": {}, "falhas": {}}
@@ -176,17 +229,25 @@ def main():
                 else:
                     estado["falhas"][robo] = estado["falhas"].get(robo, 0) + 1
                 del rodando[robo]
+        for robo, proc in list(rodando.items()):
+            minutos = (time.time() - comeco[robo + "_t"]) / 60
+            if minutos > MAX_MIN.get(robo, MAX_PADRAO):
+                log(f"robô {robo} passou de {MAX_MIN.get(robo, MAX_PADRAO)} min; encerrando para não travar os outros")
+                encerrar(proc)
         if agora != ultimo:
             ultimo = agora
             if agora.minute % 5 == 0:
                 vigiar(estado, ligados, agora)
+                saude(estado, rodando, comeco, agora)
             for robo in ligados:
                 if na_hora(robo, agora):
                     if robo in rodando:
                         log(f"robô {robo} ainda está rodando; esta rodada fica para a próxima")
                         continue
                     log(f"começando o robô {robo}")
-                    rodando[robo] = subprocess.Popen(["bash", str(APP / "servidor" / "rodar.sh"), robo])
+                    rodando[robo] = iniciar(robo)
+                    comeco[robo] = agora.isoformat()
+                    comeco[robo + "_t"] = time.time()
         time.sleep(15)
 
 

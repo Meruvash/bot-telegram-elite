@@ -68,6 +68,11 @@ Variáveis: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUC
 
 O mesmo aviso só se repete depois de 6 h, e chega um "resolvido" quando o problema passa.
 
+**Saúde visível de fora** (27/11/2026): a cada 5 minutos a agenda grava e envia ao R2 o arquivo
+https://eliteboardgamers.com.br/black/saude/estado.json (quando a página foi refeita, quais robôs estão rodando, o último
+fim sem erro de cada um e as últimas linhas do log, sem links). Robô que passa do tempo máximo (`MAX_MIN`) é encerrado
+pela agenda, e a trava de publicação espera no máximo 20 min, para um robô preso não parar os outros.
+
 **Cuidado com deploy:** cada envio ao repositório faz o Railway reiniciar o serviço, o que interrompe o robô que
 estiver rodando (o educado leva até 4 h). Os dados não se perdem (há cópia antes de cada rodada), mas a leitura
 daquela rodada sim. Prefira enviar mudanças longe dos minutos :05 e :35.

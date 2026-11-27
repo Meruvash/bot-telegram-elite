@@ -57,13 +57,14 @@ for f in conteudo/black/*.json; do
 done
 
 exec 8>/tmp/elite-robo-publicar.lock
-flock 8
-python3 tools/black/radar.py pagina >/dev/null || { echo "não consegui refazer a página"; exit 1; }
+# espera a vez de publicar no máximo 20 min: uma publicação travada não pode parar todos os robôs (27/11/2026)
+flock -w 1200 8 || { echo "a trava de publicação está presa há 20 min; esta rodada não publica"; exit 1; }
+timeout --kill-after=30 10m python3 tools/black/radar.py pagina >/dev/null || { echo "não consegui refazer a página"; exit 1; }
 
 # postagem duplicada nunca vai ao ar (antes era o workflow black-sem-duplicata.yml)
-if ! python3 tools/duplicatas.py >/dev/null 2>&1; then
-  python3 tools/black/radar.py pagina >/dev/null
-  python3 tools/duplicatas.py || { echo "a página refeita ainda tem duplicata: publicação suspensa nesta rodada"; exit 1; }
+if ! timeout 5m python3 tools/duplicatas.py >/dev/null 2>&1; then
+  timeout --kill-after=30 10m python3 tools/black/radar.py pagina >/dev/null
+  timeout 5m python3 tools/duplicatas.py || { echo "a página refeita ainda tem duplicata: publicação suspensa nesta rodada"; exit 1; }
 fi
 
 # link de afiliado de terceiros nunca vai ao ar (pedido do usuário em 05/11/2026)
@@ -73,6 +74,6 @@ print('\n'.join(p)); sys.exit(1 if p else 0)"; then
   echo "link de afiliado de terceiros nos dados: publicação suspensa nesta rodada"; exit 1
 fi
 
-python3 "$BASE/servidor/publicar_r2.py" black img/black
+timeout --kill-after=30 10m python3 "$BASE/servidor/publicar_r2.py" black img/black
 exit $?
 }
