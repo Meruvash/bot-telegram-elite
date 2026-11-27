@@ -7,7 +7,8 @@ comunidade.json e a página ficou mais de 6 horas sem ser publicada em plena Bla
 script limpa os dados na origem: link de afiliado vira None (campo que é só o link) ou some do texto. A trava continua
 lá, como última barreira; com os dados limpos ela não para mais tudo por causa de um post.
 
-Uso: python3 tools/black/limpar_afiliados.py   (mostra quantos trechos limpou em cada arquivo)
+Uso: python3 tools/black/limpar_afiliados.py           limpa os dados (conteudo/black)
+     python3 tools/black/limpar_afiliados.py --saida   limpa o que vai ao ar (black/), antes do envio
 """
 import json
 import re
@@ -65,7 +66,38 @@ def limpar(obj):
     return obj, 0
 
 
+LINK_HTML = re.compile(r"""https?://[^\s"'<>]+""")
+
+
+def limpar_saida():
+    """Última barreira (pedido do dono em 27/11/2026: "se aparecer um link de afiliado, você ignora ele, conserta e
+    publica o resto"): nos arquivos que vão ao ar (black/), link de afiliado vira "#" e sobra em texto some.
+    A operação nunca para por causa de um link."""
+    for arq in sorted((RADAR / "black").rglob("*")):
+        if not arq.is_file() or arq.suffix.lower() not in (".html", ".json", ".xml", ".txt", ".js"):
+            continue
+        texto = arq.read_text(encoding="utf-8", errors="ignore")
+        if not AFILIADO_PUBLICO.search(texto):
+            continue
+        n = 0
+
+        def troca(m):
+            nonlocal n
+            if AFILIADO_PUBLICO.search(m.group(0)):
+                n += 1
+                return "#"
+            return m.group(0)
+        novo = LINK_HTML.sub(troca, texto)
+        if AFILIADO_PUBLICO.search(novo):
+            novo, k = re.subn(r"""[^\s"'<>]*(?:amzn\.to|amzlink\.to|link\.amazon|amzlinks\.|meli\.la|shope\.ee|s\.shopee|tidd\.ly|lmd\.ink|awin1\.com|redir\.lomadee)[^\s"'<>]*""", "#", novo)
+            n += k
+        arq.write_text(novo, encoding="utf-8")
+        print(f"tirei {n} link(s) de afiliado de terceiros de {arq.relative_to(RADAR)} antes de publicar")
+
+
 def main():
+    if "--saida" in sys.argv:
+        return limpar_saida()
     for arq in sorted((RADAR / "conteudo" / "black").rglob("*.json")):
         try:
             texto = arq.read_text(encoding="utf-8")

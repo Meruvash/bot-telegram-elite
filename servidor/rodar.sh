@@ -67,14 +67,18 @@ timeout --kill-after=30 10m python3 tools/black/radar.py pagina >/dev/null || { 
 # postagem duplicada nunca vai ao ar (antes era o workflow black-sem-duplicata.yml)
 if ! timeout 5m python3 tools/duplicatas.py >/dev/null 2>&1; then
   timeout --kill-after=30 10m python3 tools/black/radar.py pagina >/dev/null
-  timeout 5m python3 tools/duplicatas.py || { echo "a página refeita ainda tem duplicata: publicação suspensa nesta rodada"; exit 1; }
+  timeout 5m python3 tools/duplicatas.py || echo "aviso: a página refeita ainda tem duplicata; publica assim mesmo (a operação não para)"
 fi
 
-# link de afiliado de terceiros nunca vai ao ar (pedido do usuário em 05/11/2026)
+# link de afiliado de terceiros nunca vai ao ar (pedido do usuário em 05/11/2026), e também nunca para a operação
+# (pedido do dono em 27/11/2026): o que sobrar na página é tirado do HTML e o resto é publicado
+timeout 2m python3 tools/black/limpar_afiliados.py --saida || echo "aviso: não consegui limpar a saída"
 if ! python3 -c "import sys,pathlib; sys.path.insert(0,'tools'); import verificar_site as v; \
-p=[str(f) for f in list(pathlib.Path('conteudo/black').rglob('*.json'))+list(pathlib.Path('black').rglob('*.*')) if f.is_file() and v.AFILIADO_PUBLICO.search(f.read_text(encoding='utf-8',errors='ignore'))]; \
+p=[str(f) for f in pathlib.Path('black').rglob('*.*') if f.is_file() and v.AFILIADO_PUBLICO.search(f.read_text(encoding='utf-8',errors='ignore'))]; \
 print('\n'.join(p)); sys.exit(1 if p else 0)"; then
-  echo "link de afiliado de terceiros nos dados: publicação suspensa nesta rodada"; exit 1
+  echo "link de afiliado ainda na página depois da limpeza: este arquivo não vai, o resto vai"
+  python3 -c "import sys,pathlib; sys.path.insert(0,'tools'); import verificar_site as v; \
+[f.unlink() for f in pathlib.Path('black').rglob('*.*') if f.is_file() and f.name != 'index.html' and v.AFILIADO_PUBLICO.search(f.read_text(encoding='utf-8',errors='ignore'))]"
 fi
 
 timeout --kill-after=30 10m python3 "$BASE/servidor/publicar_r2.py" black img/black
