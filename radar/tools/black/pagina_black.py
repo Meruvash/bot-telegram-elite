@@ -662,7 +662,8 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     # sem PS5 abaixo do limite: mostra o mais barato encontrado até agora, com o link (pedido do dono em 27/11/2026)
     ps5_barato = None if ps5_itens else ps5.mais_barato(ps5_dados)
     if ps5_barato:
-        ps5_itens = [{**ps5_barato, "observacao": f"Ainda acima de {ps5.limite_txt()}: é o PS5 novo mais barato que o robô encontrou até agora."}]
+        aviso = "" if ps5_barato.get("vendedor_ok", True) else " Vendedor não conferido pelo robô: veja a reputação antes de comprar."
+        ps5_itens = [{**ps5_barato, "observacao": f"Ainda acima de {ps5.limite_txt()}: é o PS5 novo mais barato que o robô encontrou até agora.{aviso}"}]
     ps5_html = "".join(
         f'<li class="cup-c"><span class="cup-img">{ilustra(a["modelo"], a["loja"])}</span>'
         f'<p class="cup-loja">{e(a["modelo"])}</p>'
@@ -672,6 +673,15 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
         + (f'<p class="cup-ref">{e(a["observacao"])}</p>' if a.get("observacao") else "")
         + f'<p class="cup-st">Preço visto {hora(a["verificado"], agora_)} ({e(a.get("fonte") or "conferido na página da loja")}). Confira na loja antes de comprar.</p>'
         f'<a href="{e(a["url"])}" target="_blank" rel="noopener nofollow">Ver na loja ↗</a></li>' for a in ps5_itens)
+    # nem preço: mostra os PS5 do catálogo do Mercado Livre, com link, para a pessoa ver o preço lá (28/11/2026)
+    if not ps5_html and ps5_dados.get("catalogo"):
+        ps5_html = "".join(
+            f'<li class="cup-c"><span class="cup-img">{ilustra(c["modelo"], "Mercado Livre")}</span>'
+            f'<p class="cup-loja">{e(c["modelo"])}</p>'
+            f'<p class="cup-txt">Mercado Livre · preço não informado pela API</p>'
+            f'<p class="cup-st">Catálogo lido {hora(c["visto"], agora_)}. Veja o preço e o vendedor na página antes de comprar.</p>'
+            f'<a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">Ver preço no Mercado Livre ↗</a></li>'
+            for c in ps5_dados["catalogo"][:4] if ps5.eh_console(c.get("modelo")))
     menor_api = min((a["preco"] for a in ps5_dados.get("api", []) if ps5.eh_console(a.get("modelo"), a.get("preco"))
                      and not radar.preco_velho(a.get("verificado"))), default=None)
     ps5_vazio = (f"Nenhum PlayStation 5 novo abaixo de {ps5.limite_txt()} nesta leitura"

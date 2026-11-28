@@ -78,13 +78,28 @@ def ler():
         for p in r.json().get("results") or []:
             if p.get("id") and eh_console(p.get("name")):
                 produtos[p["id"]] = p.get("name")
-    reputacao, achados = {}, []
+    reputacao, achados, qualquer, codigos = {}, [], [], {}
     for pid, nome in produtos.items():
         r = requests.get(f"{apis.ML}/products/{pid}/items", headers=h, timeout=30)
         time.sleep(0.4)
-        if r.status_code != 200:
-            continue
-        for it in sorted((x for x in r.json().get("results") or [] if x.get("price") and x.get("condition", "new") == "new"),
+        codigos[r.status_code] = codigos.get(r.status_code, 0) + 1
+        if r.status_code == 200:
+            itens = r.json().get("results") or []
+        else:
+            # 28/11/2026: /products/ID/items responde 403 (PolicyAgent) para o aplicativo; o produto em si ainda diz o
+            # anúncio vencedor (buy_box_winner) quando o Mercado Livre preenche esse campo
+            rp = requests.get(f"{apis.ML}/products/{pid}", headers=h, timeout=30)
+            time.sleep(0.4)
+            bw = (rp.json().get("buy_box_winner") or {}) if rp.status_code == 200 else {}
+            itens = [bw] if bw.get("price") else []
+            codigos[f"produto {rp.status_code}"] = codigos.get(f"produto {rp.status_code}", 0) + 1
+        for it in sorted((x for x in itens if x.get("price") and x.get("condition", "new") == "new"), key=lambda x: x["price"])[:1]:
+            if eh_console(nome, float(it["price"])):
+                anuncio = it.get("item_id") or it.get("id")
+                qualquer.append({"modelo": nome, "loja": "Mercado Livre", "vendedor": None, "nivel": "vendedor não conferido",
+                                 "preco": float(it["price"]), "url": f"https://www.mercadolivre.com.br/p/{pid}" + (f"?pdp_filters=item_id:{anuncio}" if anuncio else ""),
+                                 "fonte": "API do Mercado Livre", "verificado": apis.agora(), "vendedor_ok": False})
+        for it in sorted((x for x in itens if x.get("price") and x.get("condition", "new") == "new"),
                          key=lambda x: x["price"]):
             oficial = bool(it.get("official_store_id"))
             nivel, apelido = apis._ml_reputacao(h, it.get("seller_id"), reputacao) if it.get("seller_id") else (None, None)
@@ -99,6 +114,14 @@ def ler():
                 break
     antes = {(a["url"], a["preco"]) for a in dados.get("api", []) if a["preco"] < LIMITE}
     dados["api"] = sorted(achados, key=lambda a: a["preco"])
+    dados["api_todos"] = sorted(qualquer, key=lambda a: a["preco"])[:10]
+    # links do catálogo (sem preço), para a página nunca ficar sem PS5 nenhum quando a API não dá preço
+    vistos, dados["catalogo"] = set(), []
+    for pid, n in produtos.items():
+        if n.lower() not in vistos and len(dados["catalogo"]) < 6:
+            vistos.add(n.lower())
+            dados["catalogo"].append({"modelo": n, "url": f"https://www.mercadolivre.com.br/p/{pid}", "visto": apis.agora()})
+    print(f"-- PS5: respostas do Mercado Livre {codigos}")
     dados["lido"] = apis.agora()
     radar.gravar(ARQ, dados)
     abaixo = [a for a in dados["api"] if a["preco"] < LIMITE]
@@ -129,10 +152,16 @@ def mais_barato(dados=None):
     PS5 abaixo do limite, a página mostra o link da oferta de menor valor). Mesmas regras da vitrine, sem o limite:
     console novo de verdade, link direto sem afiliado, preço visto há menos de radar.PRECO_MAX_HORAS."""
     dados = dados if dados is not None else ler_arquivo()
-    validos = [a for a in dados.get("api", []) + dados.get("manuais", [])
-               if a.get("preco") and not radar.preco_velho(a.get("verificado")) and eh_console(a.get("modelo"), a["preco"])
-               and a.get("url") and not radar.afiliado(a["url"]) and not radar._AFILIADO_PUBLICO.search(a["url"])]
-    return min(validos, key=lambda a: a["preco"]) if validos else None
+    def ok(a):
+        return (a.get("preco") and not radar.preco_velho(a.get("verificado")) and eh_console(a.get("modelo"), a["preco"])
+                and a.get("url") and not radar.afiliado(a["url"]) and not radar._AFILIADO_PUBLICO.search(a["url"]))
+    conferidos = [a for a in dados.get("api", []) + dados.get("manuais", []) if ok(a)]
+    if conferidos:
+        return min(conferidos, key=lambda a: a["preco"])
+    # sem vendedor conferido (pedido do dono em 28/11/2026: "não importa o preço, os mais baratos, tem que pôr"): mostra
+    # o anúncio mais barato do catálogo, com o aviso de que o vendedor não foi conferido
+    outros = [a for a in dados.get("api_todos", []) if ok(a)]
+    return min(outros, key=lambda a: a["preco"]) if outros else None
 
 
 def limite_txt():
