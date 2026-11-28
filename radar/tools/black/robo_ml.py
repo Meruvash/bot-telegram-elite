@@ -35,6 +35,12 @@ def main():
         ps5.avisar(ps5.ler())
     except Exception as ex:  # noqa: BLE001
         print(f"aviso: vigia do PS5 falhou nesta leitura ({ex.__class__.__name__}: {ex})")
+    # promoções das grandes lojas de varejo para o feed (28/11/2026): erro aqui não derruba o robô
+    try:
+        import varejo
+        varejo.ler()
+    except Exception as ex:  # noqa: BLE001
+        print(f"aviso: varejo falhou nesta leitura ({ex.__class__.__name__}: {ex})")
     import pagina_black
     with radar._TravaDados():
         r = radar.calcular()

@@ -198,6 +198,9 @@ JS_FEED = r"""<style>
 .fd-novas[hidden],.fd-desejos[hidden],.fd-dia[hidden]{display:none}
 .fd-desejos .fd-btn{white-space:nowrap;padding:6px 10px;font-size:.9rem}
 .fd-som{justify-self:start;background:transparent;color:inherit;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 12px;font-size:.85rem;cursor:pointer}
+.fd-tag.fd-lj{background:#dbe7ff;color:#12306e}
+.fd-c>div>.fd-tag:first-child{margin-right:38px}
+.fd-c.fd-site{grid-template-columns:1fr}
 .fd-sentinela{height:1px}
 .fd-painel{display:grid;gap:10px;max-width:640px;margin:12px 0}
 .fd-seq{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700}
@@ -240,7 +243,7 @@ JS_FEED = r"""<style>
   function id(o){ return o.s||o.n; }
   function brl(v){ return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
   function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
-  function raro(o){ return o.d>=0.4; }  // só 40%+ (28/11/2026: com "recorde" junto, 100 de 143 viravam raros)
+  function raro(o){ return o.d>=0.4&&!o.k; }  // só 40%+ (28/11/2026: com "recorde" junto, 100 de 143 viravam raros)
   // Sons (pedido do dono em 28/11/2026; gerados no ElevenLabs): só tocam depois do primeiro toque da pessoa na página
   // (regra dos navegadores) e podem ser desligados no botão 🔊, que fica lembrado no aparelho
   var somLigado=ler('elite_som',true), tocou=false, sons={}, ultimoSom=0;
@@ -276,7 +279,7 @@ JS_FEED = r"""<style>
   function progresso(){
     var t=ofertas.length||1, v=Math.min(vistos.ids.length,t);
     barra.style.width=Math.max(8,Math.round(v/t*100))+'%';  // começa com um trecho preenchido
-    prog.textContent=v>=t?'🏆 Você viu todas as '+t+' ofertas de hoje!':'Você já viu '+v+' de '+t+' ofertas de hoje.';
+    prog.textContent=v>=t?'🏆 Você viu tudo o que há no feed hoje ('+t+' cartões)!':'Você já viu '+v+' de '+t+' ofertas de hoje.';
   }
   function pintaDesejos(){
     var ks=Object.keys(desejos); boxDes.hidden=!ks.length; if(!ks.length) return;
@@ -289,10 +292,14 @@ JS_FEED = r"""<style>
     }).join('');
   }
   function cartao(o, extra){
+    if(o.sub!==undefined){ var ln=document.createElement('li'); ln.className='fd-c fd-site'; ln.dataset.id='site:'+o.u;
+      ln.innerHTML='<div><span class="fd-tag">'+(o.k==='resenha'?'📖 Resenha':'📰 Notícia')+'</span><p class="fd-n">'+esc(o.n)+'</p><p class="fd-m">'+esc(o.sub)+'</p><a class="fd-btn" href="'+esc(o.u)+'">Ler no site</a></div>'; return ln; }
     var li=document.createElement(extra?'div':'li'); li.className='fd-c'+(raro(o)?' fd-raro':''); li.dataset.id=id(o);
     var nova=ultima&&o.e&&o.e>ultima, tags='';
     if(nova) tags+='<span class="fd-tag fd-nv">🆕 novo para você</span>';
-    if(o.d>=0.4) tags+='<span class="fd-tag fd-rr">💎 achado raro</span>';
+    if(o.k==='loja') tags+='<span class="fd-tag fd-lj">🏬 desconto anunciado pela loja</span>';
+    if(o.k==='quase') tags+='<span class="fd-tag">quase lá</span>';
+    if(raro(o)) tags+='<span class="fd-tag fd-rr">💎 achado raro</span>';
     if(o.rec) tags+='<span class="fd-tag">🏆 menor preço do período</span>';
     if(o.c) tags+='<span class="fd-tag">achado da comunidade</span>';
     var salvo=!!desejos[id(o)];
@@ -300,8 +307,8 @@ JS_FEED = r"""<style>
       '<a class="fd-img" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">'+
       (o.i?'<img src="'+esc(o.i)+'" alt="" loading="lazy" decoding="async" width="240" height="240">':'')+
       '<span class="fd-pct">−'+Math.round(o.d*100)+'%</span></a><div>'+tags+
-      '<p class="fd-n">'+esc(o.n)+'</p><p class="fd-p">'+brl(o.p)+'<s>média '+brl(o.r)+'</s></p>'+
-      '<p class="fd-m">'+esc(o.l)+' · '+brl(o.r-o.p)+' abaixo da média'+(o.m?' · +'+o.m+' loja'+(o.m>1?'s':''):'')+'</p>'+
+      '<p class="fd-n">'+esc(o.n)+'</p><p class="fd-p">'+brl(o.p)+'<s>'+(o.k==='loja'?'de ':'média ')+brl(o.r)+'</s></p>'+
+      '<p class="fd-m">'+esc(o.l)+' · '+(o.k==='loja'?'preço "de" informado pela loja, não conferido no histórico':brl(o.r-o.p)+' abaixo da média')+(o.m?' · +'+o.m+' loja'+(o.m>1?'s':''):'')+'</p>'+
       '<a class="fd-btn" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">Ver na '+esc(o.l)+' ↗</a></div>';
     li.querySelector('.fd-fav').addEventListener('click',function(){
       var k=id(o);
@@ -331,13 +338,22 @@ JS_FEED = r"""<style>
   }
   var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){ if(es[0].isIntersecting) mais(); },{rootMargin:'600px 0px'}):null;
   fetch('feed.json',{cache:'no-cache'}).then(function(r){ return r.json(); }).then(function(d){
-    var todas=d.ofertas||[];
+    var todas=d.ofertas||[], extras=(d.lojas||[]), quase=(d.quase||[]), site=(d.site||[]);
     // surpresa em posição variável: um achado raro (40%+) sobe para o meio do feed a cada 5 a 9 cartões
     var raros=todas.filter(raro), comuns=todas.filter(function(o){ return !raro(o); });
     while(comuns.length||raros.length){
       if(raros.length&&(ofertas.length+1>=proxRaro||!comuns.length)){ ofertas.push(raros.shift()); proxRaro=ofertas.length+5+Math.floor(Math.random()*5); }
       else ofertas.push(comuns.shift());
     }
+    // mistura: a cada 3 ofertas com desconto real entra 1 promoção de loja; a cada 14 cartões, 1 notícia ou resenha;
+    // no fim, as ofertas "quase lá" e o que sobrou das lojas
+    var mist=[], reais=ofertas.slice(), nSite=0;
+    while(reais.length){ mist.push(reais.shift()); 
+      if(mist.length%4===3&&extras.length) mist.push(extras.shift());
+      if(mist.length%14===13&&site.length) mist.push(site.shift()); }
+    while(quase.length||extras.length){ if(quase.length) mist.push(quase.shift()); if(extras.length) mist.push(extras.shift());
+      if(mist.length%14===13&&site.length) mist.push(site.shift()); }
+    ofertas=mist; todas=ofertas.filter(function(o){ return !o.sub; });
     if(ultima){ var n=todas.filter(function(o){ return o.e&&o.e>ultima; }).length;
       if(n){ novas.textContent='🔥 '+n+' oferta'+(n>1?'s novas':' nova')+' desde a sua última visita'; novas.hidden=false; } }
     // oferta do dia: a melhor que a pessoa ainda não viu hoje (mesma para o dia inteiro depois de aberta)
@@ -347,7 +363,8 @@ JS_FEED = r"""<style>
     if(jaAberta) mostraDia(jaAberta,false);
     else if(!todas.length) boxDia.hidden=true;
     else abrir.addEventListener('click',function(){
-      var cand=todas.filter(function(o){ return vistos.ids.indexOf(id(o))<0; }); if(!cand.length) cand=todas;
+      var reaisDia=todas.filter(function(o){ return !o.k; }); if(!reaisDia.length) reaisDia=todas;
+      var cand=reaisDia.filter(function(o){ return vistos.ids.indexOf(id(o))<0; }); if(!cand.length) cand=reaisDia;
       cand=cand.slice().sort(function(a,b){ return b.d-a.d; }).slice(0,5);
       var o=cand[Math.floor(Math.random()*cand.length)];
       gravar('elite_dia',{dia:hoje,id:id(o)}); mostraDia(o,true);
@@ -698,8 +715,44 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
                      "r": round(x["ref"], 2), "d": round(x["desc"], 4), "u": x["url"], "e": exata(entrou[sl]) or None,
                      "rec": bool(x.get("recorde")), "c": bool(x.get("comunidade")), "b": x.get("bgg"),
                      "v": x.get("verificado"), "nv": x.get("nivel"), "m": len(todos_g[sl]) - 1})
+    # Mais novidade no feed (pedido do dono em 28/11/2026): "Quase lá" (15% a 19%), promoções das grandes lojas de
+    # varejo (desconto anunciado pela loja, tools/black/varejo.py) e as notícias e resenhas mais recentes do site
+    quase_feed = []
+    for sl, g in g_quase.items():
+        x = g[0]
+        if sl in todos_g:
+            continue
+        quase_feed.append({"s": sl, "n": nome(x), "i": capa(x, "/", 240) or None, "l": x["loja"], "p": round(x["por"], 2),
+                           "r": round(x["ref"], 2), "d": round(x["desc"], 4), "u": x["url"], "e": None, "rec": bool(x.get("recorde")),
+                           "c": bool(x.get("comunidade")), "m": len(g) - 1, "k": "quase"})
+    varejo_feed = []
+    try:
+        import varejo
+        por_loja = {}
+        for a in varejo.promocoes():
+            por_loja.setdefault(a["l"], []).append(a)
+        # uma de cada loja por vez, para uma loja em liquidação não tomar o feed inteiro
+        while any(por_loja.values()) and len(varejo_feed) < 80:
+            for lj in list(por_loja):
+                if por_loja[lj]:
+                    a = por_loja[lj].pop(0)
+                    varejo_feed.append({"s": "v:" + a["u"], "n": a["n"], "i": a.get("i"), "l": a["l"], "p": round(a["p"], 2),
+                                        "r": round(a["t"], 2), "d": round(a["d"], 4), "u": a["u"], "e": a.get("entrou"),
+                                        "rec": False, "c": False, "m": 0, "k": "loja"})
+    except Exception as ex:  # noqa: BLE001 — sem o varejo, o feed segue com o resto
+        print("aviso: varejo fora do feed nesta leitura:", ex)
+    site_feed = []
+    try:
+        busca = json.loads((ROOT / "busca.json").read_text(encoding="utf-8"))
+        # as 9 notícias mais recentes (a lista já vem da mais nova para a mais antiga) e 3 resenhas
+        for b in [x for x in busca if x.get("t") == "n"][:9] + [x for x in busca if x.get("t") == "r"][:3]:
+            if b.get("u"):
+                site_feed.append({"n": b["n"], "sub": b.get("s") or "", "u": "/" + b["u"].lstrip("/"), "k": "noticia" if b["t"] == "n" else "resenha"})
+    except (FileNotFoundError, ValueError):
+        pass
     (ROOT / "black").mkdir(exist_ok=True)
-    (ROOT / "black" / "feed.json").write_text(json.dumps({"gerado": agora_.isoformat(timespec="minutes"), "ofertas": feed},
+    (ROOT / "black" / "feed.json").write_text(json.dumps({"gerado": agora_.isoformat(timespec="minutes"), "ofertas": feed,
+                                                          "quase": quase_feed, "lojas": varejo_feed, "site": site_feed},
                                                          ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # Listas na ordem do usuário (04/11/2026): os mais recentes em cima, os mais antigos embaixo e, a cada
@@ -904,7 +957,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
  </header>
  <section id="feed" aria-labelledby="h-feed" class="fd">
   <h2 id="h-feed">Feed de ofertas</h2>
-  <p class="sub">Todas as ofertas com desconto real, a mais nova primeiro. Role para ver mais: elas vão aparecendo enquanto você desce.</p>
+  <p class="sub">As ofertas com desconto real, a mais nova primeiro, misturadas com promoções anunciadas pelas grandes lojas (marcadas no cartão) e as novidades do site. Role para ver mais.</p>
   <p class="fd-novas" hidden></p>
   <ol class="fd-lista" aria-live="polite"></ol>
   <p class="fd-fim" hidden>Você viu todas as ofertas de agora. O radar confere de novo em 30 minutos.</p>

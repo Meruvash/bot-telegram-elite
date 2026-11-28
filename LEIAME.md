@@ -73,6 +73,12 @@ https://eliteboardgamers.com.br/black/saude/estado.json (quando a página foi re
 fim sem erro de cada um e as últimas linhas do log, sem links). Robô que passa do tempo máximo (`MAX_MIN`) é encerrado
 pela agenda, e a trava de publicação espera no máximo 20 min, para um robô preso não parar os outros.
 
+**Varejo no feed** (28/11/2026, `radar/tools/black/varejo.py`): o robô `ml` lê, no máximo a cada 2 horas por loja, a consulta
+pública de catálogo de Ri Happy, Livrarias Curitiba, Toymania, Americanas e Fast Shop (liberada no robots.txt de cada
+uma). Jogo com 20% ou mais entre o preço "de" e o "por" entra no feed com o selo "desconto anunciado pela loja": não
+é desconto real conferido no histórico. O preço de cada dia fica em `conteudo/black/varejo.json`, para o desconto real
+poder ser calculado quando houver histórico.
+
 **Cuidado com deploy:** cada envio ao repositório faz o Railway reiniciar o serviço, o que interrompe o robô que
 estiver rodando (o educado leva até 4 h). Os dados não se perdem (há cópia antes de cada rodada), mas a leitura
 daquela rodada sim. Prefira enviar mudanças longe dos minutos :05 e :35.
