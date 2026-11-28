@@ -1,4 +1,4 @@
-"""Robô normal do Radar Black de Verdade: leitura rápida (quedas de preço e jogos perto do corte), conferência
+"""Robô normal do Radar Ofertas Elite: leitura rápida (quedas de preço e jogos perto do corte), conferência
 nas lojas no ritmo do primeiro robô (2 s entre páginas) e promoções novas do Promobit. Roda a cada 30 minutos.
 
 Uso: python3 tools/black/robo_normal.py [--limite N]

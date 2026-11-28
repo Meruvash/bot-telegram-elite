@@ -1,4 +1,4 @@
-"""Cupons das lojas para o Radar Black de Verdade.
+"""Cupons das lojas para o Radar Ofertas Elite.
 
 Uso (chamado pelo radar.py a cada leitura; pode rodar sozinho para teste):
   python3 tools/black/cupons.py ler          # lê os cupons anunciados nas páginas das lojas do radar

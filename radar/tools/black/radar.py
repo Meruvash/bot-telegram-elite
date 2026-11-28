@@ -1,4 +1,4 @@
-"""Radar Black de Verdade: ofertas de jogos de tabuleiro com desconto real de 20% ou mais.
+"""Radar Ofertas Elite: ofertas de jogos de tabuleiro com desconto real de 20% ou mais.
 
 Uso:
   python3 tools/black/radar.py varrer          # varre todos os jogos com preço do Compara Jogos (sitemap) e monta a lista

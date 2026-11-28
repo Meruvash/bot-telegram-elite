@@ -1,4 +1,4 @@
-"""Bot do Telegram da Elite Boardgamers: promoções do Black de Verdade e notícias/resenhas do site.
+"""Bot do Telegram da Elite Boardgamers: promoções do Ofertas Elite e notícias/resenhas do site.
 
 Projeto separado do repositório do site, de propósito: os robôs do Radar Black (que consultavam lojas e faziam
 centenas de commits por semana) levaram à desativação do repositório antigo. Este bot:
@@ -100,7 +100,7 @@ def _esc(s):
 
 
 def texto_telegram(a):
-    rotulo = {"black": "Black de Verdade", "noticias": "Notícias", "resenhas": "Resenhas"}.get(a["tema"], "Elite Boardgamers")
+    rotulo = {"black": "Ofertas Elite", "noticias": "Notícias", "resenhas": "Resenhas"}.get(a["tema"], "Elite Boardgamers")
     pag = PAGINA.get(a["tema"], SITE)
     return f"<b>{_esc(a['titulo'])}</b>\n{_esc(a['texto'])}\n\n<a href=\"{html.escape(pag)}\">{rotulo}</a> · Elite Boardgamers"
 

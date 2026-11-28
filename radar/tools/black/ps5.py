@@ -1,4 +1,4 @@
-"""Vigia de PlayStation 5 do Black de Verdade (pedido do usuário em 20/11/2026: "se tiver qualquer PlayStation 5
+"""Vigia de PlayStation 5 do Ofertas Elite (pedido do usuário em 20/11/2026: "se tiver qualquer PlayStation 5
 abaixo de R$ 3.000, me informa e adiciona essa promoção no site"; limite subiu para R$ 3.700 em 25/11/2026,
 a pedido do dono: o PS5 Digital passou a R$ 4.599,99 e nada aparecia abaixo de R$ 3.000).
 

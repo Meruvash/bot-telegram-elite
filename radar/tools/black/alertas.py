@@ -1,4 +1,4 @@
-"""Alertas no celular do Black de Verdade, pelo ntfy (ntfy.sh: serviço open source e gratuito de notificações).
+"""Alertas no celular do Ofertas Elite, pelo ntfy (ntfy.sh: serviço open source e gratuito de notificações).
 
 Quem quer receber assina o canal TOPICO no app ntfy (Android ou iPhone) ou no navegador (ntfy.sh/<canal>); o
 alerta chega na barra de notificações do celular, como mensagem, e o toque abre a página do radar.
@@ -109,7 +109,7 @@ def _publicar(titulo, texto, link=PAGINA, tags="game_die", prioridade="default",
     """Manda um alerta para o canal. Os cabeçalhos do ntfy vão em ASCII; título e texto acentuados vão no corpo JSON."""
     corpo = {"topic": topico, "title": titulo, "message": texto, "click": link, "tags": tags.split(","),
              "priority": {"min": 1, "low": 2, "default": 3, "high": 4, "max": 5}[prioridade], "icon": ICONE,
-             "actions": [{"action": "view", "label": "Ver no Black de Verdade", "url": PAGINA}]}
+             "actions": [{"action": "view", "label": "Ver no Ofertas Elite", "url": PAGINA}]}
     if imagem:
         corpo["attach"] = imagem
     cab = {**UA, "Content-Type": "application/json"}
@@ -200,7 +200,7 @@ def avisar(radar_itens):
             continue
         txt = (f"{len(ofs)} ofertas com nota alta ao mesmo tempo, até {max(x['desc'] for x in ofs) * 100:.0f}% abaixo da média real. "
                f"Destaques: " + "; ".join(f"{x['nome']} por {brl(x['por'])}" for x in ofs[:3]) + ". Todas no bloco da loja, no topo da página.")
-        if enviar(f"🏬 {lj} entrou em Black de verdade", txt, link=PAGINA + "#lojas-black", tags="game_die,department_store",
+        if enviar(f"🏬 {lj} está cheia de ofertas na Ofertas Elite", txt, link=PAGINA + "#lojas-black", tags="game_die,department_store",
                   prioridade="high"):
             lojas_avisadas[lj] = hoje
     ids = {id(x) for x in individuais}
@@ -209,7 +209,7 @@ def avisar(radar_itens):
     lista_resto = "; ".join(f"{x['nome']} (−{x['desc'] * 100:.0f}%)" for x in resto)
     if len(lista_resto) > 3500:  # limite do texto do alerta; o restante está na página
         lista_resto = lista_resto[:3500].rsplit("; ", 1)[0] + "; e outros na página"
-    if resto and enviar(f"+{len(resto)} promoções novas no Black de Verdade", lista_resto, tags="game_die"):
+    if resto and enviar(f"+{len(resto)} promoções novas no Ofertas Elite", lista_resto, tags="game_die"):
         for x in resto:
             avisados[x["slug"]] = hoje
             pendentes.pop(x["slug"], None)

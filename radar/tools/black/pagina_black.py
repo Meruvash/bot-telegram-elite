@@ -1,4 +1,4 @@
-"""Gera /black/index.html (Black de Verdade) a partir do que tools/black/radar.py calculou.
+"""Gera /black/index.html (Ofertas Elite) a partir do que tools/black/radar.py calculou.
 
 Chamado pelo próprio radar.py; não rode sozinho. As capas vêm da ficha do produto no Compara Jogos, baixadas uma
 vez e guardadas em img/black/<slug>.webp (240 px), com crédito na página.
@@ -29,7 +29,7 @@ IMG = ROOT / "img" / "black"
 TESTAVEIS = set()  # domínios com teste no carrinho ligado (tools/black/cupons.py TESTE_APROVADAS)
 
 CSS = """<style>
-/* Black de Verdade: vitrine escura, capa grande, desconto que se lê de longe */
+/* Ofertas Elite: vitrine escura, capa grande, desconto que se lê de longe */
 .bk{padding-top:14px;padding-bottom:40px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px;color:var(--ink)}.bk>*{min-width:0}
 .bk h2{font-size:1.35rem;line-height:1.2;margin:0 0 4px;color:#fff}
 .bk .sub{color:var(--muted);font-size:.95rem;margin:0}
@@ -173,6 +173,65 @@ CSS = """<style>
 .bk-info b{color:#fff}
 .bk .credito{font-size:.8rem;color:#a1a9b5;margin:10px 0 0}
 </style>"""
+
+
+# Feed de rolagem (28/11/2026): carrega black/feed.json e mostra 8 cartões por vez quando a pessoa chega perto do fim;
+# marca como "novo para você" o que entrou depois da última visita (guardado só no aparelho, em localStorage)
+JS_FEED = r"""<style>
+.fd-lista{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:14px;max-width:640px}
+.fd-c{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease}
+.fd-c.fd-on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.fd-c{transition:none;opacity:1;transform:none}}
+.fd-img{position:relative;display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#fff}
+.fd-img img{width:100%;height:100%;object-fit:contain;display:block}
+.fd-pct{position:absolute;left:6px;top:6px;background:#1f8a4c;color:#fff;font-weight:800;font-size:.85rem;padding:2px 7px;border-radius:999px}
+.fd-n{margin:0 0 4px;font-weight:700;line-height:1.25}
+.fd-p{margin:0;font-size:1.25rem;font-weight:800;color:#4cc38a}.fd-p s{font-size:.85rem;font-weight:400;opacity:.65;margin-left:6px}
+.fd-m{margin:4px 0 8px;font-size:.85rem;opacity:.8}
+.fd-tag{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;margin:0 6px 6px 0;background:#fff3c4;color:#5a4300}
+.fd-tag.fd-nv{background:#ffe1e1;color:#8a0f0f}
+.fd-btn{display:inline-block;font-weight:700;padding:8px 14px;border-radius:10px;background:var(--gold,#e8b84a);color:#111;text-decoration:none}
+.fd-novas{font-weight:700;background:#ffe1e1;color:#8a0f0f;display:inline-block;padding:6px 12px;border-radius:999px}
+.fd-sentinela{height:1px}
+@media (max-width:420px){.fd-c{grid-template-columns:96px 1fr;gap:10px}}
+</style>
+<script>
+(function(){
+  var lista=document.querySelector('.fd-lista'); if(!lista) return;
+  var fim=document.querySelector('.fd-fim'), novas=document.querySelector('.fd-novas'), sent=document.querySelector('.fd-sentinela');
+  var ofertas=[], pos=0, LOTE=8, ultima='';
+  try{ ultima=localStorage.getItem('elite_ultima_visita')||''; }catch(e){}
+  function brl(v){ return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+  function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
+  function cartao(o){
+    var li=document.createElement('li'); li.className='fd-c';
+    var nova=ultima&&o.e&&o.e>ultima, tags='';
+    if(nova) tags+='<span class="fd-tag fd-nv">🆕 novo para você</span>';
+    if(o.rec) tags+='<span class="fd-tag">🏆 menor preço do período</span>';
+    if(o.c) tags+='<span class="fd-tag">achado da comunidade</span>';
+    li.innerHTML='<a class="fd-img" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">'+
+      (o.i?'<img src="'+esc(o.i)+'" alt="" loading="lazy" decoding="async" width="240" height="240">':'')+
+      '<span class="fd-pct">−'+Math.round(o.d*100)+'%</span></a><div>'+tags+
+      '<p class="fd-n">'+esc(o.n)+'</p><p class="fd-p">'+brl(o.p)+'<s>média '+brl(o.r)+'</s></p>'+
+      '<p class="fd-m">'+esc(o.l)+' · '+brl(o.r-o.p)+' abaixo da média'+(o.m?' · +'+o.m+' loja'+(o.m>1?'s':''):'')+'</p>'+
+      '<a class="fd-btn" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">Ver na '+esc(o.l)+' ↗</a></div>';
+    return li;
+  }
+  function mais(){
+    var ate=Math.min(pos+LOTE, ofertas.length);
+    for(; pos<ate; pos++){ var li=cartao(ofertas[pos]); lista.appendChild(li); (function(el){ requestAnimationFrame(function(){ el.classList.add('fd-on'); }); })(li); }
+    if(pos>=ofertas.length){ fim.hidden=false; if(io) io.disconnect(); }
+  }
+  var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){ if(es[0].isIntersecting) mais(); },{rootMargin:'600px 0px'}):null;
+  fetch('feed.json',{cache:'no-cache'}).then(function(r){ return r.json(); }).then(function(d){
+    ofertas=d.ofertas||[];
+    if(ultima){ var n=ofertas.filter(function(o){ return o.e&&o.e>ultima; }).length;
+      if(n){ novas.textContent='🔥 '+n+' oferta'+(n>1?'s novas':' nova')+' desde a sua última visita'; novas.hidden=false; } }
+    mais(); if(io) io.observe(sent); else { while(pos<ofertas.length) mais(); }
+    try{ localStorage.setItem('elite_ultima_visita', d.gerado||new Date().toISOString()); }catch(e){}
+  }).catch(function(){ lista.insertAdjacentHTML('beforeend','<li class="sub">Não deu para carregar o feed agora. As ofertas estão em <a href="#todas">Todas as ofertas</a>.</li>'); });
+})();
+</script>"""
 
 
 def nome(x):
@@ -397,7 +456,7 @@ btn.addEventListener('click',async()=>{const m=motivo();
   const x=await prazo(fetch(api+'/v1/push/inscrever',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sub:s.toJSON(),temas:['black'],juntar:true})}),15000,'sem resposta do servidor do Elite');
   if(!x.ok)throw new Error('o servidor do Elite recusou a inscrição ('+x.status+')');
   mostra('.wp-ok');
-  r.showNotification('Alertas do Black de Verdade ativados',{body:'Quando um jogo entrar no radar com desconto real, o aviso chega aqui.',icon:'/icon-192.png',tag:'ativado'})}
+  r.showNotification('Alertas do Ofertas Elite ativados',{body:'Quando um jogo entrar no radar com desconto real, o aviso chega aqui.',icon:'/icon-192.png',tag:'ativado'})}
  catch(e){mostra('.wp-erro','Não deu para ativar: '+(e&&e.message||e)+'. Confira se está no Chrome (Android) ou no Safari pela Tela de Início (iPhone) e tente de novo.')}
  finally{btn.textContent=txt;btn.disabled=false}});
 q('.wp-sair').addEventListener('click',async()=>{try{const r=await navigator.serviceWorker.getRegistration('/sw-black.js');const s=r&&await r.pushManager.getSubscription();
@@ -449,7 +508,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
         push = None
     tg_btn = (f'<a class="al-btn al-tg" href="https://t.me/{e(tg.lstrip("@"))}" target="_blank" rel="noopener">'
               f'Entrar no canal do Telegram (1 toque)</a>') if tg else ""
-    titulo = "Black de Verdade: ofertas de jogos de tabuleiro com desconto real"
+    titulo = "Ofertas Elite: ofertas de jogos de tabuleiro com desconto real"
     # um grupo por jogo, na ordem do maior desconto; a primeira oferta de cada grupo é a melhor
     grupos = {}
     for x in radar_itens:
@@ -504,6 +563,19 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     # piso do destaque (25/11/2026): economia de R$ 30 ou mais e preço de R$ 50 ou mais
     ordem = [sl for sl in ordem if capa(todos_g[sl][0], pre, 640) and radar.vale_destaque(todos_g[sl][0])]
     top = [todos_g[sl][0] for sl in ordem[:N_NOVIDADES]]
+    # Feed de ofertas (pedido do dono em 28/11/2026): todas as ofertas, a mais nova primeiro, num arquivo leve que a
+    # página carrega aos poucos enquanto a pessoa rola (black/feed.json; sem repetir o HTML das listas)
+    ordem_feed = sorted(todos_g, key=lambda sl: (exata(entrou[sl]), str(todos_g[sl][0].get("verificado") or "")), reverse=True)
+    feed = []
+    for sl in ordem_feed:
+        x = todos_g[sl][0]
+        feed.append({"n": nome(x), "i": capa(x, "/", 640) or capa(x, "/", 240) or None, "l": x["loja"], "p": round(x["por"], 2),
+                     "r": round(x["ref"], 2), "d": round(x["desc"], 4), "u": x["url"], "e": exata(entrou[sl]) or None,
+                     "rec": bool(x.get("recorde")), "c": bool(x.get("comunidade")), "b": x.get("bgg"),
+                     "v": x.get("verificado"), "nv": x.get("nivel"), "m": len(todos_g[sl]) - 1})
+    (ROOT / "black").mkdir(exist_ok=True)
+    (ROOT / "black" / "feed.json").write_text(json.dumps({"gerado": agora_.isoformat(timespec="minutes"), "ofertas": feed},
+                                                         ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # Listas na ordem do usuário (04/11/2026): os mais recentes em cima, os mais antigos embaixo e, a cada
     # DESTAQUE_CADA cartões, um destaque com o maior desconto que ainda não apareceu (sem repetir cartão)
@@ -532,7 +604,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     lista_html = em_ordem({x["slug"]: grupos[x["slug"]] for x in melhor.values()})
     outras_html = em_ordem(g_outras)
     dest_html = "".join(cartao(todos_g[sl], pre, cps, agora_, destaque=True, novo=quando(entrou[sl])) for sl in ordem[:N_NOVIDADES])
-    # Lojas em Black de verdade (docs/PLANO_RADAR.md, Frente 1, item 3): loja com 8+ ofertas de nota alta ao mesmo tempo
+    # Lojas com muitas ofertas (docs/PLANO_RADAR.md, Frente 1, item 3): loja com 8+ ofertas de nota alta ao mesmo tempo
     # ganha um bloco no topo com todas; nada de limite por loja (decisão do dono, 25/11/2026). Marketplace fica fora.
     import nota  # noqa: E402 (mesmo diretório)
     fortes = nota.lojas_fortes(list(radar_itens) + list(outras), excluir=radar.FORA)
@@ -689,12 +761,12 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     ps5_vazio = (f"Nenhum PlayStation 5 novo abaixo de {ps5.limite_txt()} nesta leitura"
                  + (f" (o mais barato de loja oficial ou MercadoLíder no Mercado Livre está em {brl(menor_api)})" if menor_api else "")
                  + ". O robô confere de novo a cada 30 minutos.")
-    corpo = f"""{cabecalho(pre, "Black de Verdade")}
+    corpo = f"""{cabecalho(pre, "Ofertas Elite")}
 <main id="conteudo" class="in bk">
- {trilha(("Início", pre), ("Black de Verdade", ""))}
+ {trilha(("Início", pre), ("Ofertas Elite", ""))}
  <header class="bk-hero">
   <span class="bk-kick">Radar de preços · Black Friday 2026</span>
-  <h1>Black de <span>Verdade</span></h1>
+  <h1>Ofertas <span>Elite</span></h1>
   <p class="lide">Só entra aqui jogo de tabuleiro que está <b>pelo menos 20% abaixo do preço médio real</b> dos últimos meses. Nada de comparar com um preço "de" inventado na véspera.</p>
   <ul class="bk-stats">
    <li class="ouro"><b>{total}</b><span>jogos com desconto real ({len(melhor)} bem avaliados e {n_outras} em outras promoções)</span></li>
@@ -703,8 +775,18 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
    <li><b>{n_cupons}</b><span>cupom{"s" if n_cupons != 1 else ""} anunciado{"s" if n_cupons != 1 else ""} pelas lojas</span></li>
   </ul>
   <p class="bk-atual">Atualizado em {agora_.strftime("%d/%m/%Y às %Hh%M")} (horário de Brasília). O radar lê os preços de novo a cada 30 minutos.</p>
-  <nav class="bk-pulo" aria-label="Atalhos"><a class="pri" href="#melhores">Ver as novidades</a><a class="sec" href="#alertas">🔔 Alertas no celular</a><button type="button" class="inst" hidden>📲 Tela de Início</button><a class="sec" href="#todas">Bem avaliados ({len(melhor)})</a>{f'<a class="sec" href="#outras">Outras promoções ({n_outras})</a>' if n_outras else ""}{f'<a class="sec" href="#quase">Quase Black ({len(g_quase)})</a>' if quase else ""}{'<a class="sec" href="#cupons">Cupons</a>' if cps_html else ""}{'<a class="sec" href="#comunidade">Achados da comunidade</a>' if pb_html else ""}{'<a class="sec" href="#sem-foto">Achados sem foto</a>' if sem_foto_html else ""}</nav>
+  <nav class="bk-pulo" aria-label="Atalhos"><a class="pri" href="#feed">Rolar o feed de ofertas</a><a class="sec" href="#melhores">Novidades</a><a class="sec" href="#alertas">🔔 Alertas no celular</a><button type="button" class="inst" hidden>📲 Tela de Início</button><a class="sec" href="#todas">Bem avaliados ({len(melhor)})</a>{f'<a class="sec" href="#outras">Outras promoções ({n_outras})</a>' if n_outras else ""}{f'<a class="sec" href="#quase">Quase lá ({len(g_quase)})</a>' if quase else ""}{'<a class="sec" href="#cupons">Cupons</a>' if cps_html else ""}{'<a class="sec" href="#comunidade">Achados da comunidade</a>' if pb_html else ""}{'<a class="sec" href="#sem-foto">Achados sem foto</a>' if sem_foto_html else ""}</nav>
  </header>
+ <section id="feed" aria-labelledby="h-feed" class="fd">
+  <h2 id="h-feed">Feed de ofertas</h2>
+  <p class="sub">Todas as ofertas com desconto real, a mais nova primeiro. Role para ver mais: elas vão aparecendo enquanto você desce.</p>
+  <p class="fd-novas" hidden></p>
+  <ol class="fd-lista" aria-live="polite"></ol>
+  <p class="fd-fim" hidden>Você viu todas as ofertas de agora. O radar confere de novo em 30 minutos.</p>
+  <div class="fd-sentinela" aria-hidden="true"></div>
+  <noscript><p class="sub">O feed precisa de JavaScript. As mesmas ofertas estão logo abaixo, em <a href="#todas">Todas as ofertas</a>.</p></noscript>
+ </section>
+ {JS_FEED}
  <ul class="bk-conf">
   <li>Desconto calculado sobre a média aparada do histórico de preços, não sobre o preço "de" da loja.</li>
   <li>Preço conferido na página da própria loja, com o horário da leitura em cada oferta. Promoções postadas pela comunidade (Telegram e Promobit) também entram na conta, com o selo "achado da comunidade" e link para o post.</li>
@@ -712,10 +794,10 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
  </ul>
  <section id="alertas" aria-labelledby="h-alertas" class="bk-alerta">
   <h2 id="h-alertas">🔔 Receba as promoções no celular</h2>
-  <p class="sub">Quando um jogo entra no Black de Verdade, chega uma notificação no seu celular, como mensagem, com o preço, a loja e o desconto real. {"Grátis, sem instalar nada e sem cadastro: um toque e pronto." if push else "Grátis, sem cadastro e sem e-mail, pelo app ntfy (gratuito e de código aberto)."}</p>
+  <p class="sub">Quando um jogo entra no Ofertas Elite, chega uma notificação no seu celular, como mensagem, com o preço, a loja e o desconto real. {"Grátis, sem instalar nada e sem cadastro: um toque e pronto." if push else "Grátis, sem cadastro e sem e-mail, pelo app ntfy (gratuito e de código aberto)."}</p>
   {f'''<div class="wp" data-chave="{e(push["chave"])}" data-api="{e(push["api"])}">
    <button type="button" class="al-btn wp-ativar">🔔 Ativar alertas neste celular</button>
-   <p class="wp-ok" hidden>✅ Pronto! Os alertas do Black de Verdade vão chegar neste aparelho. <button type="button" class="al-mini wp-sair">Desativar</button></p>
+   <p class="wp-ok" hidden>✅ Pronto! Os alertas do Ofertas Elite vão chegar neste aparelho. <button type="button" class="al-mini wp-sair">Desativar</button></p>
    <p class="wp-ios" hidden>No iPhone, a Apple só deixa sites mandarem notificação depois de adicionados à tela de início: toque em <b>Compartilhar</b> (o quadrado com a seta ⬆️), depois em <b>Adicionar à Tela de Início</b>. Abra o Elite pelo ícone novo, volte aqui e toque em <b>Ativar alertas</b>.</p>
    <p class="wp-neg" hidden>As notificações estão bloqueadas para este site. É preciso liberar no navegador (leva 3 toques). <button type="button" class="inst guia-perm">📍 Me mostre onde tocar</button></p>
    <p class="wp-erro" hidden>Este navegador não aceita notificações de sites. Use o Chrome no Android, o Safari no iPhone (depois de adicionar à tela de início) ou um navegador de computador.</p>
@@ -724,13 +806,13 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
   <details class="wp-mais"><summary>Prefere receber por um app (ntfy ou Telegram)?</summary>''' if push else ""}
   <div class="al-os" data-os="android">
    <p class="al-tag">No seu Android, é um toque só:</p>
-   <a class="al-btn" href="intent://ntfy.sh/eliteboardgamers-black?display=Black%20de%20Verdade#Intent;scheme=ntfy;package=io.heckel.ntfy;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dio.heckel.ntfy;end" data-al="android">Ativar alertas no celular</a>
-   <p class="al-dica">Se o app ntfy ainda não estiver instalado, a Google Play abre: toque em <b>Instalar</b>, volte para esta página e toque de novo no botão. O app abre já no canal do Black de Verdade: toque em <b>Assinar</b> (Subscribe) e pronto.</p>
+   <a class="al-btn" href="intent://ntfy.sh/eliteboardgamers-black?display=Ofertas%20Elite#Intent;scheme=ntfy;package=io.heckel.ntfy;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dio.heckel.ntfy;end" data-al="android">Ativar alertas no celular</a>
+   <p class="al-dica">Se o app ntfy ainda não estiver instalado, a Google Play abre: toque em <b>Instalar</b>, volte para esta página e toque de novo no botão. O app abre já no canal do Ofertas Elite: toque em <b>Assinar</b> (Subscribe) e pronto.</p>
    {f'<p class="al-tag" style="margin-top:16px">Ou pelo Telegram, também com um toque:</p>{tg_btn}' if tg else ""}
    <p class="al-ajuda" hidden>Não abriu? <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Instale o ntfy na Google Play</a> e toque no botão de novo. Ou abra o ntfy, toque em <b>+</b> e digite <b>eliteboardgamers-black</b>.</p>
   </div>
   <div class="al-os" data-os="ios">
-   {f'<p class="al-tag">No iPhone, é um toque só:</p>{tg_btn}<p class="al-dica">Abre o Telegram no canal do Black de Verdade: toque em <b>Entrar</b> e as promoções chegam como mensagem. Não tem Telegram? <a href="https://apps.apple.com/app/telegram-messenger/id686449807" target="_blank" rel="noopener">Instale aqui</a>.</p><p class="al-tag" style="margin-top:16px">Prefere sem Telegram? Pelo app ntfy, são 3 passos:</p>' if tg else '<p class="al-tag">No iPhone, são 3 passos:</p>'}
+   {f'<p class="al-tag">No iPhone, é um toque só:</p>{tg_btn}<p class="al-dica">Abre o Telegram no canal do Ofertas Elite: toque em <b>Entrar</b> e as promoções chegam como mensagem. Não tem Telegram? <a href="https://apps.apple.com/app/telegram-messenger/id686449807" target="_blank" rel="noopener">Instale aqui</a>.</p><p class="al-tag" style="margin-top:16px">Prefere sem Telegram? Pelo app ntfy, são 3 passos:</p>' if tg else '<p class="al-tag">No iPhone, são 3 passos:</p>'}
    <ol class="al-passos">
     <li><a class="al-btn" href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" rel="noopener">1. Instalar o ntfy (App Store)</a></li>
     <li><button type="button" class="al-btn al-copia" data-copia="eliteboardgamers-black">2. Copiar o nome do canal</button></li>
@@ -739,7 +821,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
   </div>
   <div class="al-os" data-os="pc">
    <p class="al-tag">Aponte a câmera do celular para o código: ele abre esta página no celular, com o botão certo para o seu aparelho.</p>
-   <img class="al-qr" src="../img/black/qr-alertas.svg" width="180" height="180" alt="QR code que abre a página de alertas do Black de Verdade no celular">
+   <img class="al-qr" src="../img/black/qr-alertas.svg" width="180" height="180" alt="QR code que abre a página de alertas do Ofertas Elite no celular">
    {f'<p class="al-tag" style="margin-top:16px">Ou entre no canal do Telegram:</p>{tg_btn}' if tg else ""}
    <p class="al-dica">Prefere receber neste computador? <a href="https://ntfy.sh/eliteboardgamers-black" target="_blank" rel="noopener">Abra o canal no navegador</a>, toque em <b>Subscribe</b> e permita as notificações.</p>
   </div>
@@ -755,7 +837,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
   {f'<ul class="cupons">{ps5_html}</ul>' if ps5_html else f'<p class="vazio">{ps5_vazio}</p>'}
  </section>
  {f"""<section id="lojas-black" aria-labelledby="h-lojas">
-  <h2 id="h-lojas">Lojas em Black de verdade</h2>
+  <h2 id="h-lojas">Lojas com muitas ofertas</h2>
   <p class="sub">Quando uma loja tem {nota.LOJA_FORTE_MIN} ou mais ofertas com nota alta ao mesmo tempo, ela ganha um bloco aqui com todas elas. As mesmas ofertas continuam na lista geral. Marketplaces (Mercado Livre, Amazon) ficam fora: lá cada oferta é de um vendedor.</p>
   {lojas_html}
  </section>""" if lojas_html else ""}
@@ -784,8 +866,8 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
   {f'<ul class="ofertas outras">{outras_html}</ul>' if outras_html else '<p class="vazio">Nenhum jogo nessa faixa nesta leitura.</p>'}
  </section>
  <section id="quase" aria-labelledby="h-quase">
-  <h2 id="h-quase">Quase Black: de 15% a 19% abaixo da média</h2>
-  <p class="sub">Jogos que ainda não chegaram aos 20% do Black de Verdade, mas já estão abaixo da média real do período. Mesmo cálculo e mesma conferência na loja. Se o preço cair mais, o jogo sobe para a lista principal.</p>
+  <h2 id="h-quase">Quase lá: de 15% a 19% abaixo da média</h2>
+  <p class="sub">Jogos que ainda não chegaram aos 20% do Ofertas Elite, mas já estão abaixo da média real do período. Mesmo cálculo e mesma conferência na loja. Se o preço cair mais, o jogo sobe para a lista principal.</p>
   {f'<ul class="ofertas quase">{quase_html}</ul>' if quase_html else '<p class="vazio">Nenhum jogo nessa faixa nesta leitura.</p>'}
  </section>
  <section id="cupons" aria-labelledby="h-cupons">
@@ -839,7 +921,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
 {JS}"""
     ld = seo.script({"@type": "CollectionPage", "@id": url, "url": url, "name": titulo, "inLanguage": "pt-BR",
                      "dateModified": agora_.isoformat(timespec="minutes")},
-                    seo.trilha(("Início", f"{SITE}/"), ("Black de Verdade", url)))
+                    seo.trilha(("Início", f"{SITE}/"), ("Ofertas Elite", url)))
     descr_curta = (f"{total} jogos de tabuleiro até {pct(maior)} abaixo do preço médio real. Desconto calculado sobre o histórico, "
                    "não sobre o preço \"de\" da loja. Atualizado a cada 30 minutos.") if melhor else None
     descr = descr_curta or ("Radar de ofertas de jogos de tabuleiro com desconto real de 20% ou mais sobre a média aparada do histórico "
@@ -862,18 +944,18 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
 
 
 def robo():
-    """Página /black/robo/: quem é o robô do Black de Verdade, o que ele lê e como a loja pede ajuste ou exclusão."""
+    """Página /black/robo/: quem é o robô do Ofertas Elite, o que ele lê e como a loja pede ajuste ou exclusão."""
     import lojas
     pre = "../../"
     url = f"{SITE}/black/robo/"
-    titulo = "Robô do Black de Verdade: o que ele lê e como falar com a gente"
-    corpo = f"""{cabecalho(pre, "Black de Verdade", sub=True)}
+    titulo = "Robô do Ofertas Elite: o que ele lê e como falar com a gente"
+    corpo = f"""{cabecalho(pre, "Ofertas Elite", sub=True)}
 <main id="conteudo" class="in"><div class="nota guia bk">
- {trilha(("Início", pre), ("Black de Verdade", f"{pre}black/"), ("Robô", ""))}
+ {trilha(("Início", pre), ("Ofertas Elite", f"{pre}black/"), ("Robô", ""))}
  <article class="bloco">
-  <h1>Robô do Black de Verdade</h1>
+  <h1>Robô do Ofertas Elite</h1>
   <p class="lide">Se você tem uma loja e viu <b>EliteBoardgamers/1.0</b> no registro do seu servidor, é o robô do
-  <a class="mais-g" href="{pre}black/">Black de Verdade</a>, o radar de ofertas de jogos de tabuleiro da Elite Boardgamers.
+  <a class="mais-g" href="{pre}black/">Ofertas Elite</a>, o radar de ofertas de jogos de tabuleiro da Elite Boardgamers.
   Ele leva gente para a sua loja: cada oferta do radar tem link direto para a página do produto.</p>
  </article>
  <section class="bloco"><h2>O que ele faz</h2><ul class="lista" style="display:grid;gap:10px;padding-left:20px;list-style:disc">
@@ -898,8 +980,8 @@ Disallow: /</pre>
 </div></main>
 {rodape(pre)}"""
     ld = seg_ld = seo.script({"@type": "WebPage", "@id": url, "url": url, "name": titulo, "inLanguage": "pt-BR"},
-                             seo.trilha(("Início", f"{SITE}/"), ("Black de Verdade", f"{SITE}/black/"), ("Robô", url)))
-    descr = "O que o robô do Black de Verdade lê nas lojas, com que frequência, o que ele respeita e como pedir ajuste ou exclusão."
+                             seo.trilha(("Início", f"{SITE}/"), ("Ofertas Elite", f"{SITE}/black/"), ("Robô", url)))
+    descr = "O que o robô do Ofertas Elite lê nas lojas, com que frequência, o que ele respeita e como pedir ajuste ou exclusão."
     (ROOT / "black" / "robo").mkdir(parents=True, exist_ok=True)
     (ROOT / "black" / "robo" / "index.html").write_text(pagina(titulo, descr, url, f"{SITE}/img/og/capa-premios.jpg", pre, corpo,
                                                                head_extra="\n" + CSS, jsonld=ld), encoding="utf-8")

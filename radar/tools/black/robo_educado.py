@@ -1,4 +1,4 @@
-"""Robô educado do Radar Black de Verdade: lista inteira do Compara Jogos (domingo: varredura do sitemap),
+"""Robô educado do Radar Ofertas Elite: lista inteira do Compara Jogos (domingo: varredura do sitemap),
 conferência nas lojas com 6 s entre páginas e limite diário, Keepa e Mercado Livre, feeds das lojas e cupons.
 Roda a cada 3 horas.
 

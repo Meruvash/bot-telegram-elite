@@ -1,4 +1,4 @@
-"""Feeds de produtos enviados pelas lojas (formato Google Shopping, XML) para o Radar Black de Verdade.
+"""Feeds de produtos enviados pelas lojas (formato Google Shopping, XML) para o Radar Ofertas Elite.
 
 Cadastro: conteudo/black/feeds.json, uma lista de {"loja": "Nome da loja", "url": "https://.../feed.xml"}.
 Só entram feeds que a própria loja mandou (por e-mail ou Instagram) ou que ela publica para isso.

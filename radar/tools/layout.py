@@ -30,7 +30,7 @@ ICONES = {
 }
 
 # (caminho a partir da raiz, rótulo) das seções do menu
-SECOES = [("noticias/", "Notícias"), ("resenhas/", "Resenhas"), ("como-jogar/", "Como jogar"), ("lancamentos/", "Lançamentos"), ("black/", "Black de Verdade")]
+SECOES = [("noticias/", "Notícias"), ("resenhas/", "Resenhas"), ("como-jogar/", "Como jogar"), ("lancamentos/", "Lançamentos"), ("black/", "Ofertas Elite")]
 
 
 def icone(nome, cls="ic"):
@@ -270,7 +270,7 @@ def rodape(pre, barra=None):
     if barra is None:
         barra = barra_leitura(interacao=False)
     return f"""<footer><div class="in">
- <span>Elite Boardgamers</span><a href="{pre}noticias/">Notícias</a><a href="{pre}resenhas/">Resenhas</a><a href="{pre}como-jogar/">Como jogar</a><a href="{pre}lancamentos/">Lançamentos</a><a href="{pre}black/">Black de Verdade</a><a href="{pre}jogos-de-tabuleiro/">Guia de jogos de tabuleiro</a><a href="{pre}premios/">Prêmios</a><a href="{pre}politica-editorial/">Política editorial</a>
+ <span>Elite Boardgamers</span><a href="{pre}noticias/">Notícias</a><a href="{pre}resenhas/">Resenhas</a><a href="{pre}como-jogar/">Como jogar</a><a href="{pre}lancamentos/">Lançamentos</a><a href="{pre}black/">Ofertas Elite</a><a href="{pre}jogos-de-tabuleiro/">Guia de jogos de tabuleiro</a><a href="{pre}premios/">Prêmios</a><a href="{pre}politica-editorial/">Política editorial</a>
  <a href="{INSTAGRAM}" target="_blank" rel="noopener">Instagram @eliteboardgamers</a><a href="{WHATSAPP}" target="_blank" rel="noopener">Grupo do WhatsApp</a>
 </div></footer>
 {barra}"""

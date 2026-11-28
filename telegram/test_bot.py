@@ -29,7 +29,7 @@ class TestBot(unittest.TestCase):
     def test_escapa_html(self):
         a = bot.itens(self.feeds())[-1]
         self.assertIn("&lt;b&gt;", bot.texto_telegram(a))
-        self.assertIn("Black de Verdade", bot.texto_telegram(a))
+        self.assertIn("Ofertas Elite", bot.texto_telegram(a))
 
     def test_whatsapp_sem_html(self):
         a = bot.itens(self.feeds())[1]

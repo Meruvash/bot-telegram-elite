@@ -1,4 +1,4 @@
-"""Canais públicos de promoções de jogos de tabuleiro no Telegram, para o Radar Black de Verdade.
+"""Canais públicos de promoções de jogos de tabuleiro no Telegram, para o Radar Ofertas Elite.
 
 Uso (chamado pelo robô normal; pode rodar sozinho):  python3 tools/black/telegram.py
 

@@ -129,7 +129,7 @@ def build_indice(todas, tuts, ns):
                f"- [Todos os tutoriais Como Jogar]({SITE}/como-jogar/)",
                f"- [Arquivo de notícias]({SITE}/noticias/)",
                f"- [Calendário de lançamentos no Brasil]({SITE}/lancamentos/)",
-               f"- [Black de Verdade]({SITE}/black/): promoções de jogos de tabuleiro conferidas contra o histórico de preço",
+               f"- [Ofertas Elite]({SITE}/black/): promoções de jogos de tabuleiro conferidas contra o histórico de preço",
                f"- [Política editorial]({SITE}/politica-editorial/): como pesquisamos, escolhemos e corrigimos",
                "", "## Optional", "",
                f"- [Texto integral do site]({SITE}/llms-full.txt): resenhas, tutoriais, guias e notícias dos últimos {DIAS_FULL} dias",

@@ -1,4 +1,4 @@
-"""APIs oficiais pagas ou de desenvolvedor para Amazon e Mercado Livre (Radar Black de Verdade).
+"""APIs oficiais pagas ou de desenvolvedor para Amazon e Mercado Livre (Radar Ofertas Elite).
 
 Nada aqui é programa de afiliado. Cada fonte só liga quando a chave existe no ambiente (secrets do GitHub Actions);
 as chaves nunca são gravadas em arquivo nem impressas.

@@ -1,7 +1,7 @@
-"""Cartão de prévia (og:image 1200×630) da Black de Verdade, para o link no WhatsApp e nas redes.
+"""Cartão de prévia (og:image 1200×630) da Ofertas Elite, para o link no WhatsApp e nas redes.
 
 Desenhado com Pillow (roda no GitHub Actions do radar, sem navegador): fundo preto com brilho dourado, logo,
-"Black de Verdade", o maior desconto real do momento, quantos jogos estão no radar e as capas das três melhores
+"Ofertas Elite", o maior desconto real do momento, quantos jogos estão no radar e as capas das três melhores
 ofertas com o selo de desconto. Só redesenha quando esses dados mudam (img/black/og-black.txt), para não gravar
 uma imagem nova a cada leitura de 30 minutos. Saída: img/black/og-black.jpg.
 """
@@ -81,9 +81,9 @@ def gerar(top, n_jogos, maior, data_txt):
         im.paste(lg, (56 * S, 48 * S), lg)
     # textos da esquerda
     x0 = 56 * S
-    d.text((x0, 138 * S), "RADAR DE PREÇOS · BLACK FRIDAY", font=fonte(22, 800), fill=OURO)
-    d.text((x0, 168 * S), "Black de", font=fonte(78, 900), fill=BRANCO)
-    d.text((x0, 250 * S), "Verdade", font=fonte(78, 900), fill=OURO)
+    d.text((x0, 138 * S), "RADAR DE PREÇOS · DESCONTO REAL", font=fonte(22, 800), fill=OURO)
+    d.text((x0, 168 * S), "Ofertas", font=fonte(78, 900), fill=BRANCO)
+    d.text((x0, 250 * S), "Elite", font=fonte(78, 900), fill=OURO)
     d.text((x0, 360 * S), f"até {pct(maior)}", font=fonte(64, 900), fill=VERDE)
     d.text((x0, 436 * S), "abaixo do preço médio real", font=fonte(28, 700), fill=BRANCO)
     d.text((x0, 480 * S), f"{n_jogos} jogos de tabuleiro com desconto de verdade", font=fonte(23, 500), fill=CINZA)

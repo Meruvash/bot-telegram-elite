@@ -1,4 +1,4 @@
-"""Robô do Mercado Livre do Radar Black de Verdade (pedido do usuário em 04/11/2026: um terceiro robô, sozinho, só
+"""Robô do Mercado Livre do Radar Ofertas Elite (pedido do usuário em 04/11/2026: um terceiro robô, sozinho, só
 para o Mercado Livre, sem atrapalhar o normal e o educado).
 
 A cada ciclo: lê pela API do Mercado Livre os anúncios de cada produto que o Compara Jogos liga a um jogo

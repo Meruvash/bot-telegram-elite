@@ -1,4 +1,4 @@
-"""Leitura direta das páginas das lojas para o Radar Black de Verdade.
+"""Leitura direta das páginas das lojas para o Radar Ofertas Elite.
 
 Para cada oferta candidata (perto ou acima do corte de 20%), o radar abre a página do produto na própria loja
 e lê o preço e o estoque que a loja declara nos dados estruturados da página (schema.org Product/Offer, que

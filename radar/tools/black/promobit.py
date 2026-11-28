@@ -1,4 +1,4 @@
-"""Promobit para o Radar Black de Verdade: promoções postadas pela comunidade e cupons das grandes lojas.
+"""Promobit para o Radar Ofertas Elite: promoções postadas pela comunidade e cupons das grandes lojas.
 
 Uso (chamado pelo radar.py a cada leitura; pode rodar sozinho):  python3 tools/black/promobit.py
 

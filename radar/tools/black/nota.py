@@ -1,4 +1,4 @@
-"""Nota de qualidade das ofertas do Radar Black de Verdade (0 a 100) e o nível de cada oferta.
+"""Nota de qualidade das ofertas do Radar Ofertas Elite (0 a 100) e o nível de cada oferta.
 
 Por que existe (plano de 25/11/2026): até aqui as listas, os destaques e os alertas usavam só o desconto real em %.
 Com isso, um jogo de R$ 18 com 34% de desconto passava na frente de um jogo de R$ 380 com 30% (R$ 115 a menos).
