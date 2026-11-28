@@ -665,7 +665,9 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
                       + ("" if b.get("vendedor_ok", True) else " Vendedor não conferido pelo robô: veja a reputação antes de comprar.")}
                      for b in ps5.mais_baratos(3, ps5_dados)]
     ps5_html = "".join(
-        f'<li class="cup-c"><span class="cup-img">{ilustra(a["modelo"], a["loja"])}</span>'
+        f'<li class="cup-c"><span class="cup-img">'
+        + (f'<img src="{e(a["imagem"])}" alt="{e(a["modelo"])}" loading="lazy" decoding="async" width="240" height="240">'
+           if (a.get("imagem") or "").startswith("https://") else ilustra(a["modelo"], a["loja"])) + '</span>'
         f'<p class="cup-loja">{e(a["modelo"])}</p>'
         f'<p class="of-p" style="margin:0"><b class="of-por" style="font-size:1.2rem">{brl(a["preco"])}</b>'
         + (f' <span class="of-ref">{e(a["parcelado"])}</span>' if a.get("parcelado") else "") + '</p>'

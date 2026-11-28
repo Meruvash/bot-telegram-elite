@@ -101,7 +101,10 @@ def kabum():
                         "nivel": "vendido pela KaBuM!" if loja_mesmo else "marketplace na KaBuM!", "preco": float(preco),
                         "url": f"https://www.kabum.com.br/produto/{p['code']}/{p.get('friendlyName') or ''}".rstrip("/"),
                         "fonte": "página da KaBuM!", "verificado": apis.agora(), "vendedor_ok": loja_mesmo, "console": True,
-                        "parcelado": p.get("maxInstallment")})
+                        "parcelado": p.get("maxInstallment"),
+                        # foto do produto na própria KaBuM! (pedido do dono em 28/11/2026: os PS5 estavam sem foto)
+                        "imagem": next((u for u in [p.get("image"), *(p.get("images") or []), p.get("thumbnail")]
+                                        if isinstance(u, str) and u.startswith("https://")), None)})
     achados.sort(key=lambda a: a["preco"])
     print(f"ok PS5 KaBuM!: {len(achados)} consoles com preço (menor R$ {achados[0]['preco']:.2f})" if achados else "ok PS5 KaBuM!: nenhum console disponível")
     return achados
