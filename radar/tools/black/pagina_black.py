@@ -239,7 +239,7 @@ JS_FEED = r"""<style>
   function id(o){ return o.s||o.n; }
   function brl(v){ return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
   function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
-  function raro(o){ return o.rec||o.d>=0.4; }
+  function raro(o){ return o.d>=0.4; }  // só 40%+ (28/11/2026: com "recorde" junto, 100 de 143 viravam raros)
   function confete(){
     if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     var c=document.createElement('div'); c.className='fd-conf'; var cores=['#e8b84a','#4cc38a','#ff6b6b','#6ea8ff','#fff'];
@@ -318,7 +318,7 @@ JS_FEED = r"""<style>
   var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){ if(es[0].isIntersecting) mais(); },{rootMargin:'600px 0px'}):null;
   fetch('feed.json',{cache:'no-cache'}).then(function(r){ return r.json(); }).then(function(d){
     var todas=d.ofertas||[];
-    // surpresa em posição variável: um achado raro (recorde ou 40%+) sobe para o meio do feed a cada 5 a 9 cartões
+    // surpresa em posição variável: um achado raro (40%+) sobe para o meio do feed a cada 5 a 9 cartões
     var raros=todas.filter(raro), comuns=todas.filter(function(o){ return !raro(o); });
     while(comuns.length||raros.length){
       if(raros.length&&(ofertas.length+1>=proxRaro||!comuns.length)){ ofertas.push(raros.shift()); proxRaro=ofertas.length+5+Math.floor(Math.random()*5); }
