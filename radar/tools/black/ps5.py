@@ -110,6 +110,91 @@ def kabum():
     return achados
 
 
+# Lojas na plataforma VTEX com a consulta pública de catálogo liberada no robots.txt (pedido do dono em 28/11/2026:
+# "liga a Fast Shop e a Americanas também"). Uma consulta por loja e por leitura.
+VTEX = {"Americanas": ("https://www.americanas.com.br", ("americanas",)),
+        "Fast Shop": ("https://site.fastshop.com.br", ("fast shop", "fastshop"))}
+NAO_PS5 = re.compile(r"(?i)portal|controle|dualsense\b(?!.*console)|jogo|game |headset|cabo|capa|suporte|usado|recondicionado|vitrine")
+
+
+def vtex(loja, base, proprias):
+    """PS5 de uma loja VTEX pela consulta pública /api/catalog_system/pub/products/search (preço, estoque, vendedor,
+    foto e link), pelo leitor das lojas: robots.txt, identificação EliteBoardgamers, para se bloquear."""
+    import apis
+    import lojas
+    from urllib.parse import quote
+    url = f"{base}/api/catalog_system/pub/products/search?ft={quote('console playstation 5')}&_from=0&_to=29"
+    texto = lojas.pagina(url) if not lojas.NUNCA.search(base) else _direto(url)
+    if not texto:
+        print(f"-- PS5: {loja} não respondeu nesta leitura")
+        return None
+    try:
+        produtos = json.loads(texto)
+    except ValueError:
+        print(f"-- PS5: {loja} não devolveu JSON")
+        return None
+    achados = []
+    for p in produtos:
+        nome = p.get("productName") or ""
+        cats = " ".join(p.get("categories") or []).lower()
+        if not re.search(r"(?i)playstation\s*5|ps5", nome) or re.search(r"(?i)portal|usado|recondicionado|vitrine", nome):
+            continue
+        # "Console PlayStation 5 ... 1 Controle" é console; sem "Console" no começo, controle, jogo ou cabo ficam fora
+        if not re.match(r"(?i)\s*console", nome) and (NAO_PS5.search(nome) or "console" not in cats):
+            continue
+        melhor = None
+        for it in p.get("items") or []:
+            for sel in it.get("sellers") or []:
+                o = sel.get("commertialOffer") or {}
+                preco = o.get("Price")
+                if not preco or float(preco) < PRECO_MIN or not o.get("AvailableQuantity"):
+                    continue
+                if not melhor or preco < melhor[0]:
+                    img = next((i.get("imageUrl") for i in it.get("images") or [] if (i.get("imageUrl") or "").startswith("https://")), None)
+                    melhor = (float(preco), sel.get("sellerName") or loja, img)
+        if not melhor or not (p.get("link") or "").startswith("https://"):
+            continue
+        preco, vendedor, img = melhor
+        propria = any(x in vendedor.lower() for x in proprias)
+        achados.append({"modelo": nome[:120], "loja": loja, "vendedor": vendedor,
+                        "nivel": f"vendido pela {loja}" if propria else f"marketplace na {loja}", "preco": preco,
+                        "url": p["link"], "fonte": f"catálogo da {loja}", "verificado": apis.agora(), "vendedor_ok": propria,
+                        "console": True, "imagem": img})
+    achados.sort(key=lambda a: a["preco"])
+    print(f"ok PS5 {loja}: {len(achados)} consoles com preço" + (f" (menor R$ {achados[0]['preco']:.2f})" if achados else ""))
+    return achados
+
+
+def _direto(url):
+    """Leitura de uma loja que o leitor geral pula (lista NUNCA de lojas.py, feita para o catálogo de jogos de
+    tabuleiro): mesmas regras, feitas aqui — robots.txt conferido para EliteBoardgamers e ClaudeBot, identificação
+    EliteBoardgamers, e 401/403/429 encerra a leitura sem insistir."""
+    import requests
+    from urllib.parse import urlparse
+    from protego import Protego
+    import lojas
+    u = urlparse(url)
+    h = {"User-Agent": lojas.UA}
+    try:
+        rb = requests.get(f"{u.scheme}://{u.netloc}/robots.txt", headers=h, timeout=20)
+        regras = Protego.parse(rb.text if rb.status_code == 200 else "")
+        if not all(regras.can_fetch(url, a) for a in ("EliteBoardgamers", "ClaudeBot")):
+            print(f"-- PS5: robots.txt de {u.netloc} não libera {u.path}")
+            return None
+        r = requests.get(url, headers=h, timeout=30)
+    except requests.RequestException:
+        return None
+    if r.status_code in (401, 403, 429):
+        print(f"-- PS5: {u.netloc} respondeu {r.status_code}; não insistimos")
+        return None
+    return r.text if r.status_code in (200, 206) else None
+
+
+def _lojas(dados):
+    """Todos os PS5 lidos direto nas lojas (KaBuM!, Americanas, Fast Shop)."""
+    return (dados.get("kabum") or []) + [a for k in VTEX for a in ((dados.get("vtex") or {}).get(k) or [])]
+
+
 def _console(a):
     return a.get("console") or eh_console(a.get("modelo"), a.get("preco"))
 
@@ -124,7 +209,7 @@ def ler():
     import apis
     import requests
     dados = ler_arquivo()
-    antes_kb = {(a["url"], a["preco"]) for a in dados.get("kabum", []) if a.get("vendedor_ok") and a["preco"] < LIMITE}
+    antes_kb = {(a["url"], a["preco"]) for a in _lojas(dados) if a.get("vendedor_ok") and a["preco"] < LIMITE}
     try:
         kb = kabum()
     except Exception as ex:  # noqa: BLE001 — a KaBuM! nunca derruba o vigia
@@ -132,8 +217,16 @@ def ler():
         kb = None
     if kb is not None:
         dados["kabum"] = kb
-        radar.gravar(ARQ, dados)
-    novos_kb = [a for a in dados.get("kabum", []) if a.get("vendedor_ok") and a["preco"] < LIMITE and (a["url"], a["preco"]) not in antes_kb]
+    for loja, (base, proprias) in VTEX.items():
+        try:
+            lido = vtex(loja, base, proprias)
+        except Exception as ex:  # noqa: BLE001 — uma loja nunca derruba o vigia
+            print(f"aviso: PS5 {loja} falhou ({ex.__class__.__name__}: {ex})")
+            lido = None
+        if lido is not None:
+            dados.setdefault("vtex", {})[loja] = lido
+    radar.gravar(ARQ, dados)
+    novos_kb = [a for a in _lojas(dados) if a.get("vendedor_ok") and a["preco"] < LIMITE and (a["url"], a["preco"]) not in antes_kb]
     token = apis._ml_token()
     if not token:
         print("-- PS5: sem chave do Mercado Livre; segue só com a KaBuM!")
@@ -208,7 +301,7 @@ def vitrine():
     radar.PRECO_MAX_HORAS. Mais barata primeiro."""
     dados = ler_arquivo()
     saida = []
-    for a in dados.get("api", []) + dados.get("manuais", []) + [k for k in dados.get("kabum", []) if k.get("vendedor_ok")]:
+    for a in dados.get("api", []) + dados.get("manuais", []) + [k for k in _lojas(dados) if k.get("vendedor_ok")]:
         if not a.get("preco") or a["preco"] >= LIMITE or radar.preco_velho(a.get("verificado")):
             continue
         if not _console(a):
@@ -231,17 +324,27 @@ def mais_baratos(n=3, dados=None):
     def ok(a):
         return (a.get("preco") and not radar.preco_velho(a.get("verificado")) and _console(a)
                 and a.get("url") and not radar.afiliado(a["url"]) and not radar._AFILIADO_PUBLICO.search(a["url"]))
-    kb = dados.get("kabum", [])
+    kb = _lojas(dados)
     conferidos = sorted((a for a in dados.get("api", []) + dados.get("manuais", []) + [k for k in kb if k.get("vendedor_ok")] if ok(a)),
                         key=lambda a: a["preco"])
     outros = sorted((a for a in dados.get("api_todos", []) + [k for k in kb if not k.get("vendedor_ok")] if ok(a)), key=lambda a: a["preco"])
-    saida, vistos = [], set()
-    for a in sorted(conferidos + outros, key=lambda a: a["preco"]):  # o mais barato primeiro, conferido ou não (com aviso)
+    todos = sorted(conferidos + outros, key=lambda a: a["preco"])  # o mais barato primeiro, conferido ou não (com aviso)
+    # o mais barato de cada loja sempre aparece (pedido do dono em 28/11/2026: KaBuM!, Americanas e Fast Shop); o
+    # resto das vagas vai para os mais baratos no geral
+    saida, vistos, lojas_vistas = [], set(), set()
+    for a in todos:
+        if a["loja"] not in lojas_vistas:
+            lojas_vistas.add(a["loja"])
+            vistos.add((a["modelo"].lower()[:60], a["loja"]))
+            saida.append(a)
+    for a in todos:
         chave = (a["modelo"].lower()[:60], a["loja"])
+        if len(saida) >= max(n, len(lojas_vistas)):
+            break
         if chave not in vistos:
             vistos.add(chave)
             saida.append(a)
-    return saida[:n]
+    return sorted(saida, key=lambda a: a["preco"])
 
 
 def limite_txt():

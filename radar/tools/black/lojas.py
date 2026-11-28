@@ -248,7 +248,7 @@ def pagina(url, bloquear=True):
     if r.status_code in (401, 403, 429) and (bloquear or r.status_code == 429):
         _bloquear(dom, f"página respondeu {r.status_code}")
         return None
-    return r.text if r.status_code == 200 else None
+    return r.text if r.status_code in (200, 206) else None  # 206: catálogo VTEX paginado (resposta parcial e válida)
 
 
 def bloqueadas():

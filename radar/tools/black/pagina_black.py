@@ -663,7 +663,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     if not ps5_itens:  # os mais baratos encontrados, mesmo acima do limite (pedido do dono em 28/11/2026)
         ps5_itens = [{**b, "observacao": f"Acima de {ps5.limite_txt()}: um dos PS5 novos mais baratos que o robô encontrou agora."
                       + ("" if b.get("vendedor_ok", True) else " Vendedor não conferido pelo robô: veja a reputação antes de comprar.")}
-                     for b in ps5.mais_baratos(3, ps5_dados)]
+                     for b in ps5.mais_baratos(5, ps5_dados)]
     ps5_html = "".join(
         f'<li class="cup-c"><span class="cup-img">'
         + (f'<img src="{e(a["imagem"])}" alt="{e(a["modelo"])}" loading="lazy" decoding="async" width="240" height="240">'
