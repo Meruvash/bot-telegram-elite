@@ -179,59 +179,170 @@ CSS = """<style>
 # marca como "novo para você" o que entrou depois da última visita (guardado só no aparelho, em localStorage)
 JS_FEED = r"""<style>
 .fd-lista{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:14px;max-width:640px}
-.fd-c{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease}
+.fd-c{position:relative;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease}
 .fd-c.fd-on{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.fd-c{transition:none;opacity:1;transform:none}}
+.fd-c.fd-raro{border-color:var(--gold,#e8b84a);box-shadow:0 0 0 1px var(--gold,#e8b84a),0 0 24px rgba(232,184,74,.25)}
+@media (prefers-reduced-motion:reduce){.fd-c{transition:none;opacity:1;transform:none}.fd-conf i{display:none}}
 .fd-img{position:relative;display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#fff}
 .fd-img img{width:100%;height:100%;object-fit:contain;display:block}
 .fd-pct{position:absolute;left:6px;top:6px;background:#1f8a4c;color:#fff;font-weight:800;font-size:.85rem;padding:2px 7px;border-radius:999px}
-.fd-n{margin:0 0 4px;font-weight:700;line-height:1.25}
+.fd-n{margin:0 0 4px;font-weight:700;line-height:1.25;padding-right:34px}
 .fd-p{margin:0;font-size:1.25rem;font-weight:800;color:#4cc38a}.fd-p s{font-size:.85rem;font-weight:400;opacity:.65;margin-left:6px}
 .fd-m{margin:4px 0 8px;font-size:.85rem;opacity:.8}
 .fd-tag{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;margin:0 6px 6px 0;background:#fff3c4;color:#5a4300}
-.fd-tag.fd-nv{background:#ffe1e1;color:#8a0f0f}
-.fd-btn{display:inline-block;font-weight:700;padding:8px 14px;border-radius:10px;background:var(--gold,#e8b84a);color:#111;text-decoration:none}
-.fd-novas{font-weight:700;background:#ffe1e1;color:#8a0f0f;display:inline-block;padding:6px 12px;border-radius:999px}
+.fd-tag.fd-nv{background:#ffe1e1;color:#8a0f0f}.fd-tag.fd-rr{background:var(--gold,#e8b84a);color:#111}
+.fd-btn{display:inline-block;font-weight:700;padding:8px 14px;border-radius:10px;background:var(--gold,#e8b84a);color:#111;text-decoration:none;border:0;cursor:pointer;font-size:1rem}
+.fd-fav{position:absolute;right:8px;top:8px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:#fff;font-size:1.1rem;cursor:pointer;line-height:1}
+.fd-fav[aria-pressed=true]{background:#c62828;border-color:#c62828;transform:scale(1.08)}
+.fd-novas{font-weight:700;background:#ffe1e1;color:#8a0f0f;display:inline-block;padding:6px 12px;border-radius:999px;margin:0 0 8px}
+.fd-novas[hidden],.fd-desejos[hidden],.fd-dia[hidden]{display:none}
+.fd-desejos .fd-btn{white-space:nowrap;padding:6px 10px;font-size:.9rem}
 .fd-sentinela{height:1px}
+.fd-painel{display:grid;gap:10px;max-width:640px;margin:12px 0}
+.fd-seq{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700}
+.fd-seq b{font-size:1.4rem;color:var(--gold,#e8b84a)}
+.fd-seq small{font-weight:400;opacity:.8}
+.fd-barra{height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.fd-barra i{display:block;height:100%;width:8%;background:linear-gradient(90deg,#4cc38a,var(--gold,#e8b84a));border-radius:999px;transition:width .4s ease}
+.fd-prog{font-size:.85rem;opacity:.85;margin:0}
+.fd-dia{border:1px dashed var(--gold,#e8b84a);border-radius:14px;padding:14px;text-align:center;max-width:640px}
+.fd-dia .fd-c{text-align:left;margin-top:10px}
+.fd-zap{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#0f3d24;border:1px solid #1f8a4c;border-radius:14px;padding:12px 14px;max-width:640px}
+.fd-zap p{margin:0;font-weight:700}.fd-zap small{display:block;font-weight:400;opacity:.85}
+.fd-zap a{background:#25d366;color:#062b14;font-weight:800;padding:9px 14px;border-radius:10px;text-decoration:none;white-space:nowrap}
+.fd-lista .fd-zap{max-width:none}
+.fd-desejos{max-width:640px}.fd-desejos ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.fd-desejos li{display:flex;justify-content:space-between;gap:10px;align-items:center;background:rgba(255,255,255,.06);border-radius:10px;padding:8px 12px;font-size:.92rem}
+.fd-desejos li b{color:#4cc38a}.fd-desejos .cai{color:var(--gold,#e8b84a);font-weight:700}
+.fd-conf{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:60}
+.fd-conf i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fdcai 1.4s ease-in forwards}
+@keyframes fdcai{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
 @media (max-width:420px){.fd-c{grid-template-columns:96px 1fr;gap:10px}}
 </style>
 <script>
 (function(){
   var lista=document.querySelector('.fd-lista'); if(!lista) return;
-  var fim=document.querySelector('.fd-fim'), novas=document.querySelector('.fd-novas'), sent=document.querySelector('.fd-sentinela');
-  var ofertas=[], pos=0, LOTE=8, ultima='';
+  var sec=document.getElementById('feed'), fim=document.querySelector('.fd-fim'), novas=document.querySelector('.fd-novas'), sent=document.querySelector('.fd-sentinela');
+  var ZAP='__ZAP__';
+  var ofertas=[], pos=0, LOTE=8, ultima='', proxRaro=5, proxZap=10;
+  // tudo o que é da pessoa fica só no aparelho dela (localStorage): última visita, sequência, vistos do dia e lista de desejos
+  function ler(k,pad){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):pad; }catch(e){ return pad; } }
+  function gravar(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
   try{ ultima=localStorage.getItem('elite_ultima_visita')||''; }catch(e){}
+  function hojeBR(d){ return new Date((d||new Date()).getTime()-3*3600e3).toISOString().slice(0,10); }
+  var hoje=hojeBR(), ontem=hojeBR(new Date(Date.now()-864e5));
+  // sequência de dias seguidos de visita
+  var seq=ler('elite_seq',{n:0,dia:'',max:0});
+  if(seq.dia!==hoje){ seq.n=(seq.dia===ontem)?seq.n+1:1; seq.dia=hoje; seq.max=Math.max(seq.max||0,seq.n); gravar('elite_seq',seq); }
+  var vistos=ler('elite_vistos',{dia:'',ids:[]}); if(vistos.dia!==hoje) vistos={dia:hoje,ids:[]};
+  var desejos=ler('elite_desejos',{});  // id -> {n, p (preço quando salvou), u}
+  function id(o){ return o.s||o.n; }
   function brl(v){ return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
   function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
-  function cartao(o){
-    var li=document.createElement('li'); li.className='fd-c';
+  function raro(o){ return o.rec||o.d>=0.4; }
+  function confete(){
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    var c=document.createElement('div'); c.className='fd-conf'; var cores=['#e8b84a','#4cc38a','#ff6b6b','#6ea8ff','#fff'];
+    for(var k=0;k<36;k++){ var p=document.createElement('i'); p.style.left=(Math.random()*100)+'%'; p.style.background=cores[k%cores.length]; p.style.animationDelay=(Math.random()*.4)+'s'; c.appendChild(p); }
+    document.body.appendChild(c); setTimeout(function(){ c.remove(); },2200);
+    if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
+  }
+  function zapCard(txt,sub){
+    return '<div class="fd-zap"><p>'+txt+'<small>'+sub+'</small></p><a href="'+ZAP+'" target="_blank" rel="noopener">Entrar no grupo do WhatsApp</a></div>';
+  }
+  // painel: sequência, progresso do dia, oferta do dia, lista de desejos e convite do grupo
+  var painel=document.createElement('div'); painel.className='fd-painel';
+  painel.innerHTML='<p class="fd-seq"><span>🔥 <b>'+seq.n+'</b> dia'+(seq.n>1?'s seguidos':'')+' caçando ofertas</span><small>'+
+    (seq.n>=30?'Lenda das ofertas!':seq.n>=7?'Caçador de ouro. Próximo marco: 30 dias.':seq.n>=3?'Caçador de prata. Próximo marco: 7 dias.':'Volte amanhã para manter a sequência. Marco: 3 dias.')+'</small></p>'+
+    '<div class="fd-barra" role="progressbar" aria-label="Ofertas vistas hoje"><i></i></div><p class="fd-prog"></p>'+
+    '<div class="fd-dia"><button type="button" class="fd-btn fd-abrir">🎁 Abrir a oferta do dia</button></div>'+
+    '<div class="fd-desejos" hidden><b>❤️ Sua lista de desejos</b><ul></ul></div>'+
+    zapCard('Receba as melhores ofertas no WhatsApp','Grupo da comunidade Elite: ofertas, dicas e mesa de jogo.');
+  lista.parentNode.insertBefore(painel, novas);
+  var barra=painel.querySelector('.fd-barra i'), prog=painel.querySelector('.fd-prog'), boxDes=painel.querySelector('.fd-desejos');
+  function progresso(){
+    var t=ofertas.length||1, v=Math.min(vistos.ids.length,t);
+    barra.style.width=Math.max(8,Math.round(v/t*100))+'%';  // começa com um trecho preenchido
+    prog.textContent=v>=t?'🏆 Você viu todas as '+t+' ofertas de hoje!':'Você já viu '+v+' de '+t+' ofertas de hoje.';
+  }
+  function pintaDesejos(){
+    var ks=Object.keys(desejos); boxDes.hidden=!ks.length; if(!ks.length) return;
+    var porId={}; ofertas.forEach(function(o){ porId[id(o)]=o; });
+    boxDes.querySelector('ul').innerHTML=ks.map(function(k){
+      var w=desejos[k], o=porId[k];
+      if(!o) return '<li><span>'+esc(w.n)+'</span><span>fora das ofertas agora</span></li>';
+      var caiu=o.p<w.p-0.005;
+      return '<li><span>'+esc(o.n)+(caiu?' <span class="cai">⬇ caiu '+brl(w.p-o.p)+' desde que você salvou</span>':'')+'</span><a class="fd-btn" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">'+brl(o.p)+' ↗</a></li>';
+    }).join('');
+  }
+  function cartao(o, extra){
+    var li=document.createElement(extra?'div':'li'); li.className='fd-c'+(raro(o)?' fd-raro':''); li.dataset.id=id(o);
     var nova=ultima&&o.e&&o.e>ultima, tags='';
     if(nova) tags+='<span class="fd-tag fd-nv">🆕 novo para você</span>';
+    if(o.d>=0.4) tags+='<span class="fd-tag fd-rr">💎 achado raro</span>';
     if(o.rec) tags+='<span class="fd-tag">🏆 menor preço do período</span>';
     if(o.c) tags+='<span class="fd-tag">achado da comunidade</span>';
-    li.innerHTML='<a class="fd-img" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">'+
+    var salvo=!!desejos[id(o)];
+    li.innerHTML='<button type="button" class="fd-fav" aria-pressed="'+salvo+'" aria-label="Salvar na lista de desejos" title="Salvar na lista de desejos">'+(salvo?'❤️':'🤍')+'</button>'+
+      '<a class="fd-img" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">'+
       (o.i?'<img src="'+esc(o.i)+'" alt="" loading="lazy" decoding="async" width="240" height="240">':'')+
       '<span class="fd-pct">−'+Math.round(o.d*100)+'%</span></a><div>'+tags+
       '<p class="fd-n">'+esc(o.n)+'</p><p class="fd-p">'+brl(o.p)+'<s>média '+brl(o.r)+'</s></p>'+
       '<p class="fd-m">'+esc(o.l)+' · '+brl(o.r-o.p)+' abaixo da média'+(o.m?' · +'+o.m+' loja'+(o.m>1?'s':''):'')+'</p>'+
       '<a class="fd-btn" href="'+esc(o.u)+'" target="_blank" rel="noopener nofollow sponsored">Ver na '+esc(o.l)+' ↗</a></div>';
+    li.querySelector('.fd-fav').addEventListener('click',function(){
+      var k=id(o);
+      if(desejos[k]){ delete desejos[k]; this.setAttribute('aria-pressed','false'); this.textContent='🤍'; }
+      else { desejos[k]={n:o.n,p:o.p,u:o.u}; this.setAttribute('aria-pressed','true'); this.textContent='❤️'; if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){} }
+      gravar('elite_desejos',desejos); pintaDesejos();
+    });
     return li;
   }
+  // conta como vista quando o cartão aparece na tela; achado raro solta confete uma vez por dia
+  var vendo=('IntersectionObserver' in window)?new IntersectionObserver(function(es){
+    es.forEach(function(en){ if(!en.isIntersecting) return; var k=en.target.dataset.id; vendo.unobserve(en.target);
+      if(vistos.ids.indexOf(k)<0){ vistos.ids.push(k); gravar('elite_vistos',vistos); progresso();
+        if(en.target.classList.contains('fd-raro')) confete();
+        if(vistos.ids.length===ofertas.length) confete(); }
+    });
+  },{threshold:.6}):null;
   function mais(){
     var ate=Math.min(pos+LOTE, ofertas.length);
-    for(; pos<ate; pos++){ var li=cartao(ofertas[pos]); lista.appendChild(li); (function(el){ requestAnimationFrame(function(){ el.classList.add('fd-on'); }); })(li); }
+    for(; pos<ate; pos++){
+      var li=cartao(ofertas[pos]); lista.appendChild(li); if(vendo) vendo.observe(li);
+      (function(el){ requestAnimationFrame(function(){ el.classList.add('fd-on'); }); })(li);
+      if(pos+1===proxZap && pos+1<ofertas.length){ var z=document.createElement('li'); z.innerHTML=zapCard('Gostando das ofertas?','Entre no grupo e não perca as próximas.'); lista.appendChild(z); proxZap+=18; }
+    }
     if(pos>=ofertas.length){ fim.hidden=false; if(io) io.disconnect(); }
   }
   var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){ if(es[0].isIntersecting) mais(); },{rootMargin:'600px 0px'}):null;
   fetch('feed.json',{cache:'no-cache'}).then(function(r){ return r.json(); }).then(function(d){
-    ofertas=d.ofertas||[];
-    if(ultima){ var n=ofertas.filter(function(o){ return o.e&&o.e>ultima; }).length;
+    var todas=d.ofertas||[];
+    // surpresa em posição variável: um achado raro (recorde ou 40%+) sobe para o meio do feed a cada 5 a 9 cartões
+    var raros=todas.filter(raro), comuns=todas.filter(function(o){ return !raro(o); });
+    while(comuns.length||raros.length){
+      if(raros.length&&(ofertas.length+1>=proxRaro||!comuns.length)){ ofertas.push(raros.shift()); proxRaro=ofertas.length+5+Math.floor(Math.random()*5); }
+      else ofertas.push(comuns.shift());
+    }
+    if(ultima){ var n=todas.filter(function(o){ return o.e&&o.e>ultima; }).length;
       if(n){ novas.textContent='🔥 '+n+' oferta'+(n>1?'s novas':' nova')+' desde a sua última visita'; novas.hidden=false; } }
-    mais(); if(io) io.observe(sent); else { while(pos<ofertas.length) mais(); }
+    // oferta do dia: a melhor que a pessoa ainda não viu hoje (mesma para o dia inteiro depois de aberta)
+    var dia=ler('elite_dia',{dia:'',id:''}), abrir=painel.querySelector('.fd-abrir'), boxDia=painel.querySelector('.fd-dia');
+    function mostraDia(o,festa){ boxDia.innerHTML='<b>🎁 Sua oferta do dia</b>'; var c=cartao(o,true); c.classList.add('fd-on'); boxDia.appendChild(c); if(festa) confete(); }
+    var jaAberta=dia.dia===hoje&&todas.filter(function(o){ return id(o)===dia.id; })[0];
+    if(jaAberta) mostraDia(jaAberta,false);
+    else if(!todas.length) boxDia.hidden=true;
+    else abrir.addEventListener('click',function(){
+      var cand=todas.filter(function(o){ return vistos.ids.indexOf(id(o))<0; }); if(!cand.length) cand=todas;
+      cand=cand.slice().sort(function(a,b){ return b.d-a.d; }).slice(0,5);
+      var o=cand[Math.floor(Math.random()*cand.length)];
+      gravar('elite_dia',{dia:hoje,id:id(o)}); mostraDia(o,true);
+    });
+    progresso(); pintaDesejos(); mais(); if(io) io.observe(sent); else { while(pos<ofertas.length) mais(); }
     try{ localStorage.setItem('elite_ultima_visita', d.gerado||new Date().toISOString()); }catch(e){}
   }).catch(function(){ lista.insertAdjacentHTML('beforeend','<li class="sub">Não deu para carregar o feed agora. As ofertas estão em <a href="#todas">Todas as ofertas</a>.</li>'); });
 })();
-</script>"""
+</script>""".replace("__ZAP__", "https://chat.whatsapp.com/IgQQkJdSkzHBaEq3UwFeAo")
 
 
 def nome(x):
@@ -569,7 +680,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     feed = []
     for sl in ordem_feed:
         x = todos_g[sl][0]
-        feed.append({"n": nome(x), "i": capa(x, "/", 640) or capa(x, "/", 240) or None, "l": x["loja"], "p": round(x["por"], 2),
+        feed.append({"s": sl, "n": nome(x), "i": capa(x, "/", 640) or capa(x, "/", 240) or None, "l": x["loja"], "p": round(x["por"], 2),
                      "r": round(x["ref"], 2), "d": round(x["desc"], 4), "u": x["url"], "e": exata(entrou[sl]) or None,
                      "rec": bool(x.get("recorde")), "c": bool(x.get("comunidade")), "b": x.get("bgg"),
                      "v": x.get("verificado"), "nv": x.get("nivel"), "m": len(todos_g[sl]) - 1})
