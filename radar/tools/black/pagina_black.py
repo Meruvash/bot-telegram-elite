@@ -197,6 +197,7 @@ JS_FEED = r"""<style>
 .fd-novas{font-weight:700;background:#ffe1e1;color:#8a0f0f;display:inline-block;padding:6px 12px;border-radius:999px;margin:0 0 8px}
 .fd-novas[hidden],.fd-desejos[hidden],.fd-dia[hidden]{display:none}
 .fd-desejos .fd-btn{white-space:nowrap;padding:6px 10px;font-size:.9rem}
+.fd-som{justify-self:start;background:transparent;color:inherit;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 12px;font-size:.85rem;cursor:pointer}
 .fd-sentinela{height:1px}
 .fd-painel{display:grid;gap:10px;max-width:640px;margin:12px 0}
 .fd-seq{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700}
@@ -224,7 +225,7 @@ JS_FEED = r"""<style>
   var lista=document.querySelector('.fd-lista'); if(!lista) return;
   var sec=document.getElementById('feed'), fim=document.querySelector('.fd-fim'), novas=document.querySelector('.fd-novas'), sent=document.querySelector('.fd-sentinela');
   var ZAP='__ZAP__';
-  var ofertas=[], pos=0, LOTE=8, ultima='', proxRaro=5, proxZap=10;
+  var ofertas=[], pos=0, LOTE=8, ultima='', proxRaro=5, proxZap=25;  // convite do grupo: no 25º cartão e depois a cada 40
   // tudo o que é da pessoa fica só no aparelho dela (localStorage): última visita, sequência, vistos do dia e lista de desejos
   function ler(k,pad){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):pad; }catch(e){ return pad; } }
   function gravar(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
@@ -240,6 +241,16 @@ JS_FEED = r"""<style>
   function brl(v){ return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
   function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
   function raro(o){ return o.d>=0.4; }  // só 40%+ (28/11/2026: com "recorde" junto, 100 de 143 viravam raros)
+  // Sons (pedido do dono em 28/11/2026; gerados no ElevenLabs): só tocam depois do primeiro toque da pessoa na página
+  // (regra dos navegadores) e podem ser desligados no botão 🔊, que fica lembrado no aparelho
+  var somLigado=ler('elite_som',true), tocou=false, sons={}, ultimoSom=0;
+  ['raro','dia','salvar','carga','fim'].forEach(function(n){ var a=new Audio('../img/black/som-'+n+'.mp3'); a.preload='none'; sons[n]=a; });
+  var VOL={raro:.5,dia:.6,salvar:.45,carga:.18,fim:.55};
+  function som(n){
+    if(!somLigado||!tocou) return; var agora=Date.now(); if(n==='carga'&&agora-ultimoSom<1500) return; ultimoSom=agora;
+    try{ var a=sons[n]; a.volume=VOL[n]; a.currentTime=0; var p=a.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){}
+  }
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){ window.addEventListener(ev,function(){ tocou=true; },{once:true,passive:true}); });
   function confete(){
     if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     var c=document.createElement('div'); c.className='fd-conf'; var cores=['#e8b84a','#4cc38a','#ff6b6b','#6ea8ff','#fff'];
@@ -254,11 +265,13 @@ JS_FEED = r"""<style>
   var painel=document.createElement('div'); painel.className='fd-painel';
   painel.innerHTML='<p class="fd-seq"><span>🔥 <b>'+seq.n+'</b> dia'+(seq.n>1?'s seguidos':'')+' caçando ofertas</span><small>'+
     (seq.n>=30?'Lenda das ofertas!':seq.n>=7?'Caçador de ouro. Próximo marco: 30 dias.':seq.n>=3?'Caçador de prata. Próximo marco: 7 dias.':'Volte amanhã para manter a sequência. Marco: 3 dias.')+'</small></p>'+
+    '<button type="button" class="fd-som" aria-pressed="'+somLigado+'">'+(somLigado?'🔊 Som ligado':'🔇 Som desligado')+'</button>'+
     '<div class="fd-barra" role="progressbar" aria-label="Ofertas vistas hoje"><i></i></div><p class="fd-prog"></p>'+
     '<div class="fd-dia"><button type="button" class="fd-btn fd-abrir">🎁 Abrir a oferta do dia</button></div>'+
     '<div class="fd-desejos" hidden><b>❤️ Sua lista de desejos</b><ul></ul></div>'+
     zapCard('Receba as melhores ofertas no WhatsApp','Grupo da comunidade Elite: ofertas, dicas e mesa de jogo.');
   lista.parentNode.insertBefore(painel, novas);
+  painel.querySelector('.fd-som').addEventListener('click',function(){ somLigado=!somLigado; gravar('elite_som',somLigado); this.setAttribute('aria-pressed',somLigado); this.textContent=somLigado?'🔊 Som ligado':'🔇 Som desligado'; tocou=true; if(somLigado) som('salvar'); });
   var barra=painel.querySelector('.fd-barra i'), prog=painel.querySelector('.fd-prog'), boxDes=painel.querySelector('.fd-desejos');
   function progresso(){
     var t=ofertas.length||1, v=Math.min(vistos.ids.length,t);
@@ -293,7 +306,7 @@ JS_FEED = r"""<style>
     li.querySelector('.fd-fav').addEventListener('click',function(){
       var k=id(o);
       if(desejos[k]){ delete desejos[k]; this.setAttribute('aria-pressed','false'); this.textContent='🤍'; }
-      else { desejos[k]={n:o.n,p:o.p,u:o.u}; this.setAttribute('aria-pressed','true'); this.textContent='❤️'; if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){} }
+      else { desejos[k]={n:o.n,p:o.p,u:o.u}; this.setAttribute('aria-pressed','true'); this.textContent='❤️'; som('salvar'); if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){} }
       gravar('elite_desejos',desejos); pintaDesejos();
     });
     return li;
@@ -302,16 +315,17 @@ JS_FEED = r"""<style>
   var vendo=('IntersectionObserver' in window)?new IntersectionObserver(function(es){
     es.forEach(function(en){ if(!en.isIntersecting) return; var k=en.target.dataset.id; vendo.unobserve(en.target);
       if(vistos.ids.indexOf(k)<0){ vistos.ids.push(k); gravar('elite_vistos',vistos); progresso();
-        if(en.target.classList.contains('fd-raro')) confete();
-        if(vistos.ids.length===ofertas.length) confete(); }
+        if(vistos.ids.length===ofertas.length){ confete(); som('fim'); }
+        else if(en.target.classList.contains('fd-raro')){ confete(); som('raro'); } }
     });
   },{threshold:.6}):null;
   function mais(){
     var ate=Math.min(pos+LOTE, ofertas.length);
+    if(pos>0&&ate>pos) som('carga');
     for(; pos<ate; pos++){
       var li=cartao(ofertas[pos]); lista.appendChild(li); if(vendo) vendo.observe(li);
       (function(el){ requestAnimationFrame(function(){ el.classList.add('fd-on'); }); })(li);
-      if(pos+1===proxZap && pos+1<ofertas.length){ var z=document.createElement('li'); z.innerHTML=zapCard('Gostando das ofertas?','Entre no grupo e não perca as próximas.'); lista.appendChild(z); proxZap+=18; }
+      if(pos+1===proxZap && pos+1<ofertas.length){ var z=document.createElement('li'); z.innerHTML=zapCard('Gostando das ofertas?','Entre no grupo e não perca as próximas.'); lista.appendChild(z); proxZap+=40; }
     }
     if(pos>=ofertas.length){ fim.hidden=false; if(io) io.disconnect(); }
   }
@@ -328,7 +342,7 @@ JS_FEED = r"""<style>
       if(n){ novas.textContent='🔥 '+n+' oferta'+(n>1?'s novas':' nova')+' desde a sua última visita'; novas.hidden=false; } }
     // oferta do dia: a melhor que a pessoa ainda não viu hoje (mesma para o dia inteiro depois de aberta)
     var dia=ler('elite_dia',{dia:'',id:''}), abrir=painel.querySelector('.fd-abrir'), boxDia=painel.querySelector('.fd-dia');
-    function mostraDia(o,festa){ boxDia.innerHTML='<b>🎁 Sua oferta do dia</b>'; var c=cartao(o,true); c.classList.add('fd-on'); boxDia.appendChild(c); if(festa) confete(); }
+    function mostraDia(o,festa){ boxDia.innerHTML='<b>🎁 Sua oferta do dia</b>'; var c=cartao(o,true); c.classList.add('fd-on'); boxDia.appendChild(c); if(festa){ confete(); som('dia'); } }
     var jaAberta=dia.dia===hoje&&todas.filter(function(o){ return id(o)===dia.id; })[0];
     if(jaAberta) mostraDia(jaAberta,false);
     else if(!todas.length) boxDia.hidden=true;

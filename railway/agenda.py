@@ -57,6 +57,11 @@ def preparar():
         destino = DADOS / nome
         if not destino.exists():
             destino.write_bytes((RADAR / "img-fixas" / Path(nome).name).read_bytes())
+    # sons do feed (28/11/2026): sempre a versão do repositório, para um som trocado chegar ao site
+    for som in (RADAR / "img-fixas").glob("som-*.mp3"):
+        destino = DADOS / "img" / "black" / som.name
+        if not destino.exists() or destino.read_bytes() != som.read_bytes():
+            destino.write_bytes(som.read_bytes())
     for pasta in ("conteudo", "img", "black"):  # radar/conteudo -> /dados/conteudo etc.
         link = RADAR / pasta
         if link.is_symlink() or not link.exists():
