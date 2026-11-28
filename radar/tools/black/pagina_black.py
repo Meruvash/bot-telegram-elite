@@ -660,10 +660,10 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
     import ps5
     ps5_itens, ps5_dados = ps5.vitrine()
     # sem PS5 abaixo do limite: mostra o mais barato encontrado até agora, com o link (pedido do dono em 27/11/2026)
-    ps5_barato = None if ps5_itens else ps5.mais_barato(ps5_dados)
-    if ps5_barato:
-        aviso = "" if ps5_barato.get("vendedor_ok", True) else " Vendedor não conferido pelo robô: veja a reputação antes de comprar."
-        ps5_itens = [{**ps5_barato, "observacao": f"Ainda acima de {ps5.limite_txt()}: é o PS5 novo mais barato que o robô encontrou até agora.{aviso}"}]
+    if not ps5_itens:  # os mais baratos encontrados, mesmo acima do limite (pedido do dono em 28/11/2026)
+        ps5_itens = [{**b, "observacao": f"Acima de {ps5.limite_txt()}: um dos PS5 novos mais baratos que o robô encontrou agora."
+                      + ("" if b.get("vendedor_ok", True) else " Vendedor não conferido pelo robô: veja a reputação antes de comprar.")}
+                     for b in ps5.mais_baratos(3, ps5_dados)]
     ps5_html = "".join(
         f'<li class="cup-c"><span class="cup-img">{ilustra(a["modelo"], a["loja"])}</span>'
         f'<p class="cup-loja">{e(a["modelo"])}</p>'
