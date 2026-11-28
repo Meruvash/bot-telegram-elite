@@ -2,7 +2,8 @@
 para o feed ter novidade toda vez que a pessoa volta).
 
 Lojas na plataforma VTEX cuja consulta pública de catálogo (/api/catalog_system/pub/products/search) o robots.txt
-libera: Ri Happy, Livrarias Curitiba, Toymania, Americanas e Fast Shop. Para cada uma, duas consultas por leitura
+libera: Ri Happy, Livrarias Curitiba, Toymania, Americanas, Fast Shop, Loja Grow, Superlegal, MP Brinquedos,
+Bumerang e Livraria da Vila. Para cada uma, duas consultas por leitura
 ("jogo de tabuleiro" e "jogo de cartas"), no máximo uma leitura por loja a cada INTERVALO_H horas, pelo leitor de
 ps5._direto: robots.txt conferido, identificação EliteBoardgamers, e 401/403/429 encerra sem insistir.
 
@@ -26,7 +27,11 @@ import radar  # noqa: E402
 ARQ = radar.DADOS / "varejo.json"
 LOJAS = {"Ri Happy": "https://www.rihappy.com.br", "Livrarias Curitiba": "https://www.livrariascuritiba.com.br",
          "Toymania": "https://www.toymania.com.br", "Americanas": "https://www.americanas.com.br",
-         "Fast Shop": "https://site.fastshop.com.br"}
+         "Fast Shop": "https://site.fastshop.com.br",
+         # segunda leva (28/11/2026): mais 35 lojas testadas, estas cinco têm a consulta liberada e respondem
+         "Loja Grow": "https://www.lojagrow.com.br", "Superlegal Brinquedos": "https://www.superlegalbrinquedos.com.br",
+         "MP Brinquedos": "https://www.mpbrinquedos.com.br", "Bumerang Brinquedos": "https://www.bumerangbrinquedos.com.br",
+         "Livraria da Vila": "https://www.livrariadavila.com.br"}
 BUSCAS = ("jogo de tabuleiro", "jogo de cartas")
 INTERVALO_H = 2       # cada loja é lida no máximo a cada 2 horas
 CORTE = 0.20          # desconto anunciado mínimo para entrar no feed

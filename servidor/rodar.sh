@@ -36,6 +36,14 @@ for arq in pauta.json busca.json; do
   fi
 done
 
+# calendário de lançamentos do mês (do site no ar), para os cartões de lançamento do feed: no máximo a cada 6 horas
+if [ -z "$(find lancamentos-mes.json -mmin -360 2>/dev/null)" ]; then
+  curl -fsS -A "EliteBoardgamers/1.0 (+https://eliteboardgamers.com.br/black/robo/)" --max-time 60 \
+    -o lancamentos-mes.json.novo "https://eliteboardgamers.com.br/conteudo/lancamentos/$(TZ=America/Sao_Paulo date +%Y-%m).json" \
+    && python3 -c "import json,sys; json.load(open(sys.argv[1], encoding='utf-8'))" lancamentos-mes.json.novo \
+    && mv lancamentos-mes.json.novo lancamentos-mes.json || { rm -f lancamentos-mes.json.novo; echo "aviso: não atualizei o calendário de lançamentos"; }
+fi
+
 mkdir -p conteudo/black
 COPIA="$BASE/copia/$ROBO"; rm -rf "$COPIA"; mkdir -p "$COPIA"; cp -a conteudo/black/. "$COPIA/"
 

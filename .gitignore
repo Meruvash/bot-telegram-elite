@@ -12,3 +12,4 @@ copia/
 .env
 *.env
 __pycache__/
+radar/lancamentos-mes.json*

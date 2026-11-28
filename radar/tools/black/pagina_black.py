@@ -292,8 +292,8 @@ JS_FEED = r"""<style>
     }).join('');
   }
   function cartao(o, extra){
-    if(o.sub!==undefined){ var ln=document.createElement('li'); ln.className='fd-c fd-site'; ln.dataset.id='site:'+o.u;
-      ln.innerHTML='<div><span class="fd-tag">'+(o.k==='resenha'?'📖 Resenha':'📰 Notícia')+'</span><p class="fd-n">'+esc(o.n)+'</p><p class="fd-m">'+esc(o.sub)+'</p><a class="fd-btn" href="'+esc(o.u)+'">Ler no site</a></div>'; return ln; }
+    if(o.sub!==undefined){ var ln=document.createElement('li'); ln.className='fd-c fd-site'; ln.dataset.id='site:'+o.u+'#'+o.n;
+      ln.innerHTML='<div><span class="fd-tag">'+(o.k==='resenha'?'📖 Resenha':o.k==='lancamento'?'🆕 Lançamento':'📰 Notícia')+'</span><p class="fd-n">'+esc(o.n)+'</p><p class="fd-m">'+esc(o.sub)+'</p><a class="fd-btn" href="'+esc(o.u)+'">'+(o.k==='lancamento'?'Ver os lançamentos':'Ler no site')+'</a></div>'; return ln; }
     var li=document.createElement(extra?'div':'li'); li.className='fd-c'+(raro(o)?' fd-raro':''); li.dataset.id=id(o);
     var nova=ultima&&o.e&&o.e>ultima, tags='';
     if(nova) tags+='<span class="fd-tag fd-nv">🆕 novo para você</span>';
@@ -350,9 +350,9 @@ JS_FEED = r"""<style>
     var mist=[], reais=ofertas.slice(), nSite=0;
     while(reais.length){ mist.push(reais.shift()); 
       if(mist.length%4===3&&extras.length) mist.push(extras.shift());
-      if(mist.length%14===13&&site.length) mist.push(site.shift()); }
+      if(mist.length%9===8&&site.length) mist.push(site.shift()); }
     while(quase.length||extras.length){ if(quase.length) mist.push(quase.shift()); if(extras.length) mist.push(extras.shift());
-      if(mist.length%14===13&&site.length) mist.push(site.shift()); }
+      if(mist.length%9===8&&site.length) mist.push(site.shift()); }
     ofertas=mist; todas=ofertas.filter(function(o){ return !o.sub; });
     if(ultima){ var n=todas.filter(function(o){ return o.e&&o.e>ultima; }).length;
       if(n){ novas.textContent='🔥 '+n+' oferta'+(n>1?'s novas':' nova')+' desde a sua última visita'; novas.hidden=false; } }
@@ -732,7 +732,7 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
         for a in varejo.promocoes():
             por_loja.setdefault(a["l"], []).append(a)
         # uma de cada loja por vez, para uma loja em liquidação não tomar o feed inteiro
-        while any(por_loja.values()) and len(varejo_feed) < 80:
+        while any(por_loja.values()) and len(varejo_feed) < 120:
             for lj in list(por_loja):
                 if por_loja[lj]:
                     a = por_loja[lj].pop(0)
@@ -749,6 +749,22 @@ def build(radar_itens, armadilhas, quase=(), outras=()):
             if b.get("u"):
                 site_feed.append({"n": b["n"], "sub": b.get("s") or "", "u": "/" + b["u"].lstrip("/"), "k": "noticia" if b["t"] == "n" else "resenha"})
     except (FileNotFoundError, ValueError):
+        pass
+    # lançamentos do mês (calendário do site; servidor/rodar.sh baixa o arquivo): até 6 lançados e 4 previstos, um a
+    # cada duas notícias. O cartão leva para a nossa página de lançamentos.
+    try:
+        cal = json.loads((ROOT / "lancamentos-mes.json").read_text(encoding="utf-8"))
+        lanc = [{"n": j["nome"], "sub": f'{(j.get("editora") or {}).get("nome") or "Editora não informada"} · {rot} em {cal.get("label") or "este mês"}',
+                 "u": "/lancamentos/", "k": "lancamento"}
+                for chave_, rot, n in (("lancados", "lançado", 6), ("previstos", "previsto", 4)) for j in (cal.get(chave_) or [])[:n] if j.get("nome")]
+        mistura = []
+        while site_feed or lanc:
+            mistura += site_feed[:2]
+            site_feed = site_feed[2:]
+            if lanc:
+                mistura.append(lanc.pop(0))
+        site_feed = mistura
+    except (FileNotFoundError, ValueError, AttributeError, TypeError):
         pass
     (ROOT / "black").mkdir(exist_ok=True)
     (ROOT / "black" / "feed.json").write_text(json.dumps({"gerado": agora_.isoformat(timespec="minutes"), "ofertas": feed,
